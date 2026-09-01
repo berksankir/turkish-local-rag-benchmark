@@ -13,12 +13,12 @@ içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modell
 yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
 indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
 gerçek page-safe chunking ve Qdrant local-mode dense corpus indeksi de tamamlanmıştır.
-Yalnız smoke sorguları çalıştırılmış, gold benchmark deneyleri yapılmamıştır.
-Dolayısıyla yayımlanmış bir benchmark sonucu yoktur.
+İnsan tarafından onaylanan 50 kayıtlı gold set ile dört retrieval pipeline'ının
+local CPU benchmark'ı da gerçek corpus üzerinde tamamlanmıştır.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
-gate, citation uygulama katmanı, generation ve evaluation sonraki aşamalardır.
+gate, citation uygulama katmanı ve generation sonraki aşamalardır.
 
 ## Config ve testler
 
@@ -223,18 +223,27 @@ bırakılır.
 
 ## Evaluation adayları
 
-`evaluation/candidates.jsonl`, insan incelemesine sunulan 40 cevaplanabilir ve 10
-corpus dışı cevaplanamaz soru taslağı içerir. Bu dosya bir gold set veya benchmark
-sonucu değildir. Cevaplanabilir her kayıt bir belge kimliği, fiziksel PDF sayfası ve
-extracted sayfa metninde birebir bulunan kaynak span'i taşır. Doğrulayıcı whitespace
-ya da Unicode normalizasyonu yapmadan katı alt dize eşleşmesi uygular:
+`evaluation/candidates.jsonl`, insan incelemesine sunulan ve onaylanan 40
+cevaplanabilir ve 10 corpus dışı cevaplanamaz kaydı korur. Aynı immutable
+`candidate_id` değerleri `evaluation/gold.jsonl` dosyasına aktarılmıştır. Gold split,
+retrieval sonucu görülmeden 10 dev (8 cevaplanabilir, 2 cevaplanamaz) ve 40 test
+(32 cevaplanabilir, 8 cevaplanamaz) olarak sabitlenmiştir. Cevaplanabilir her kayıt
+bir belge kimliği, fiziksel PDF sayfası ve extracted sayfa metninde birebir bulunan
+kaynak span'i taşır.
+
+Gold bütünlüğünü ve span'leri doğrulayıp dört pipeline'ı çalıştırmak için:
 
 ```powershell
-.\.venv\Scripts\python.exe -m turkish_local_rag.candidates --config config\default.toml
+.\.venv\Scripts\python.exe -m turkish_local_rag.evaluate --config config\default.toml
 ```
 
-`gold.jsonl` ancak adaylar insan tarafından incelenip açıkça onaylandıktan sonraki
-fazda oluşturulacaktır.
+Gerçek koşunun JSON, CSV ve Markdown sonuçları `evaluation/results/` altındadır.
+Test split'inde hybrid + reranker R@1 0,8125, R@5 1,0000 ve MRR 0,8917;
+hybrid RRF R@1 0,7188 ve MRR 0,8342 üretmiştir. Bununla birlikte hybrid + reranker
+ortalama 1468,325 ms ile hybrid RRF'nin 42,728 ms değerinden belirgin biçimde
+yavaştır. Reranker dev R@1'i hybrid RRF'ye göre 0,7500'den 0,6250'ye
+düşürmüştür; faydası bütün metriklerde tutarlı değildir. Test split'ine göre
+retrieval veya threshold ayarı yapılmamıştır.
 
 ## Veri ve kullanım uyarıları
 

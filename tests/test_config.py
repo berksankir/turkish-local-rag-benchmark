@@ -46,6 +46,10 @@ def test_paths_are_resolved_from_config_location() -> None:
     assert paths.evaluation_candidates == Path(
         "evaluation/candidates.jsonl"
     ).resolve()
+    assert paths.evaluation_gold == Path("evaluation/gold.jsonl").resolve()
+    assert paths.evaluation_results_directory == Path(
+        "evaluation/results"
+    ).resolve()
 
 
 def test_page_boundary_protection_cannot_be_disabled(tmp_path: Path) -> None:

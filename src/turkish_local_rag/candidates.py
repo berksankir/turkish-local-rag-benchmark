@@ -79,7 +79,7 @@ def load_candidates(path: str | Path) -> tuple[Candidate, ...]:
             raise CandidateValidationError(
                 f"invalid JSON at line {line_number}: {exc}"
             ) from exc
-        candidates.append(_parse_candidate(raw, line_number))
+        candidates.append(parse_candidate_record(raw, line_number))
     return tuple(candidates)
 
 
@@ -166,7 +166,9 @@ def validate_candidate_set(
     )
 
 
-def _parse_candidate(raw: Any, line_number: int) -> Candidate:
+def parse_candidate_record(raw: Any, line_number: int) -> Candidate:
+    """Parse one strict candidate object for candidate and gold JSONL loaders."""
+
     section = f"line {line_number}"
     record = _mapping(raw, section)
     actual_keys = set(record)

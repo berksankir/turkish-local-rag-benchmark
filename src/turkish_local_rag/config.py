@@ -24,6 +24,8 @@ class ResolvedPaths:
     reranker_model_directory: Path
     qdrant_directory: Path
     evaluation_candidates: Path
+    evaluation_gold: Path
+    evaluation_results_directory: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +40,8 @@ class PathsConfig:
     reranker_model_directory: str
     qdrant_directory: str
     evaluation_candidates: str
+    evaluation_gold: str
+    evaluation_results_directory: str
 
     def validate(self) -> None:
         for name, value in (
@@ -51,6 +55,8 @@ class PathsConfig:
             ("reranker_model_directory", self.reranker_model_directory),
             ("qdrant_directory", self.qdrant_directory),
             ("evaluation_candidates", self.evaluation_candidates),
+            ("evaluation_gold", self.evaluation_gold),
+            ("evaluation_results_directory", self.evaluation_results_directory),
         ):
             if not value.strip():
                 raise ConfigError(f"paths.{name} cannot be empty")
@@ -99,6 +105,14 @@ class PathsConfig:
                 project_root,
                 self.evaluation_candidates,
                 "paths.evaluation_candidates",
+            ),
+            evaluation_gold=_resolve_within_project(
+                project_root, self.evaluation_gold, "paths.evaluation_gold"
+            ),
+            evaluation_results_directory=_resolve_within_project(
+                project_root,
+                self.evaluation_results_directory,
+                "paths.evaluation_results_directory",
             ),
         )
 
@@ -363,6 +377,8 @@ def load_config(path: str | Path) -> ProjectConfig:
             "reranker_model_directory",
             "qdrant_directory",
             "evaluation_candidates",
+            "evaluation_gold",
+            "evaluation_results_directory",
         },
         "paths",
     )
@@ -449,6 +465,10 @@ def load_config(path: str | Path) -> ProjectConfig:
             qdrant_directory=_string(paths, "qdrant_directory", "paths"),
             evaluation_candidates=_string(
                 paths, "evaluation_candidates", "paths"
+            ),
+            evaluation_gold=_string(paths, "evaluation_gold", "paths"),
+            evaluation_results_directory=_string(
+                paths, "evaluation_results_directory", "paths"
             ),
         ),
         downloader=DownloaderConfig(
