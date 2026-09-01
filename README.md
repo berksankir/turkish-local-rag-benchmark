@@ -10,9 +10,10 @@ Repository; typed config, doğrulanmış kaynak manifesti, güvenli downloader,
 sayfa-seviyesi extraction, yapı-farkındalıklı chunking, BM25, yerel E5 dense
 retrieval, RRF hybrid retrieval ve optional cross-encoder reranking katmanlarını
 içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modelleri
-yerelde doğrulanmıştır; kaynak PDF'ler
-indirilmemiş, gerçek corpus indeksi ve benchmark deneyleri henüz
-çalıştırılmamıştır. Dolayısıyla yayımlanmış bir benchmark sonucu yoktur.
+yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
+indirilip hash'leri doğrulanmıştır; gerçek extraction, chunking, corpus indeksi ve
+benchmark deneyleri henüz çalıştırılmamıştır. Dolayısıyla yayımlanmış bir
+benchmark sonucu yoktur.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
@@ -53,6 +54,12 @@ ve redirect sonrası final URL indirme metadata'sında kaydedilir. Mevcut
 PDF ile yeni indirilen içeriğin SHA-256 değeri farklıysa mevcut dosya korunur ve
 iki hash'i de içeren açık hata üretilir. İndirilen PDF'ler ile çalışma zamanı
 metadata'sı Git tarafından ignore edilir.
+
+2026-09-01 tarihli yerel corpus checkpoint'inde dokuz PDF'nin tamamı başarıyla
+doğrulanmış, toplam boyut 3.193.812 bayt olmuş ve ikinci downloader çalıştırması
+dokuz dosyayı da `unchanged` olarak raporlamıştır. Bu runtime dosyaları
+repository'ye eklenmez; güncel hash'ler `data/downloads/` altındaki yerel
+metadata kayıtlarında tutulur.
 
 ## Sayfa-seviyesi extraction
 
