@@ -11,6 +11,9 @@ from turkish_local_rag.evaluate import (
     GoldRecord,
     aggregate_results,
     load_gold,
+    load_silver,
+    _render_markdown,
+    _split_policy,
     score_retrieval,
 )
 from turkish_local_rag import evaluate
@@ -96,6 +99,26 @@ def test_gold_loader_rejects_post_review_changes(tmp_path: Path) -> None:
         )
 
 
+def test_silver_loader_rejects_candidate_drift(tmp_path: Path) -> None:
+    candidate = _candidate("candidate-001", answerable=True)
+    changed = replace(candidate, proposed_reference_answer="Changed answer.")
+    path = tmp_path / "silver.jsonl"
+    path.write_text(
+        json.dumps(_gold_payload(changed, "dev")) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(EvaluationError, match="differs from its source candidate"):
+        load_silver(
+            path,
+            [candidate],
+            expected_split_counts={
+                "dev": {"total": 1, "answerable": 1, "unanswerable": 0},
+                "test": {"total": 0, "answerable": 0, "unanswerable": 0},
+            },
+        )
+
+
 def test_retrieval_scoring_requires_matching_document_and_page() -> None:
     gold = GoldRecord(_candidate("candidate-001", answerable=True), "dev")
     hits = [_hit("doc", 2, 1), _hit("other", 3, 2), _hit("doc", 3, 3)]
@@ -134,6 +157,65 @@ def test_aggregate_reports_each_pipeline_and_split() -> None:
     assert summary["test"]["dense"]["recall_at_5"] == 1.0
     assert summary["dev"]["hybrid_reranked"]["mrr"] == 1.0
     assert summary["all"]["bm25"]["average_retrieval_latency_ms"] == 2.0
+
+
+def test_silver_report_is_explicitly_not_human_approved() -> None:
+    summary = {
+        split: {
+            pipeline: {
+                "recall_at_1": 1.0,
+                "recall_at_3": 1.0,
+                "recall_at_5": 1.0,
+                "mrr": 1.0,
+                "correct_document_retrieval": 1.0,
+                "correct_page_retrieval": 1.0,
+                "average_retrieval_latency_ms": 1.0,
+            }
+            for pipeline in ("dense", "bm25", "hybrid_rrf", "hybrid_reranked")
+        }
+        for split in ("dev", "test", "all")
+    }
+    payload = {
+        "dataset": {
+            "kind": "silver",
+            "audit_statuses": {
+                "approved": 0,
+                "needs_changes": 0,
+                "pending": 20,
+                "rejected": 0,
+            },
+        },
+        "summary": summary,
+        "runtime": {"benchmark_seconds": 2.0, "peak_process_rss_bytes": 100},
+        "reproducibility": {
+            "finished_at_utc": "2026-09-02T00:00:00Z",
+            "dataset_kind": "silver",
+            "evaluation_set_sha256": "a" * 64,
+            "review_artifact_sha256": "b" * 64,
+            "logical_corpus_sha256": "c" * 64,
+            "embedding_model_revision": "revision-a",
+            "reranker_model_revision": "revision-b",
+        },
+    }
+
+    rendered = _render_markdown(payload)
+
+    assert rendered.startswith("# Silver retrieval benchmark")
+    assert "insan onayı değildir" in rendered
+    assert "pending=20" in rendered
+    assert "insan onaylı gold" not in rendered
+
+
+def test_split_policy_is_derived_from_selected_records() -> None:
+    records = [
+        GoldRecord(_candidate("candidate-001", answerable=True), "dev"),
+        GoldRecord(_candidate("candidate-002", answerable=False), "test"),
+    ]
+
+    assert _split_policy(records) == (
+        "fixed before retrieval: dev=1 answerable+0 unanswerable; "
+        "test=0 answerable+1 unanswerable"
+    )
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows working-set API")

@@ -25,6 +25,8 @@ class ResolvedPaths:
     qdrant_directory: Path
     evaluation_candidates: Path
     evaluation_review: Path
+    evaluation_silver: Path
+    evaluation_silver_audit: Path
     evaluation_gold: Path
     evaluation_results_directory: Path
 
@@ -42,6 +44,8 @@ class PathsConfig:
     qdrant_directory: str
     evaluation_candidates: str
     evaluation_review: str
+    evaluation_silver: str
+    evaluation_silver_audit: str
     evaluation_gold: str
     evaluation_results_directory: str
 
@@ -58,6 +62,8 @@ class PathsConfig:
             ("qdrant_directory", self.qdrant_directory),
             ("evaluation_candidates", self.evaluation_candidates),
             ("evaluation_review", self.evaluation_review),
+            ("evaluation_silver", self.evaluation_silver),
+            ("evaluation_silver_audit", self.evaluation_silver_audit),
             ("evaluation_gold", self.evaluation_gold),
             ("evaluation_results_directory", self.evaluation_results_directory),
         ):
@@ -111,6 +117,14 @@ class PathsConfig:
             ),
             evaluation_review=_resolve_within_project(
                 project_root, self.evaluation_review, "paths.evaluation_review"
+            ),
+            evaluation_silver=_resolve_within_project(
+                project_root, self.evaluation_silver, "paths.evaluation_silver"
+            ),
+            evaluation_silver_audit=_resolve_within_project(
+                project_root,
+                self.evaluation_silver_audit,
+                "paths.evaluation_silver_audit",
             ),
             evaluation_gold=_resolve_within_project(
                 project_root, self.evaluation_gold, "paths.evaluation_gold"
@@ -384,6 +398,8 @@ def load_config(path: str | Path) -> ProjectConfig:
             "qdrant_directory",
             "evaluation_candidates",
             "evaluation_review",
+            "evaluation_silver",
+            "evaluation_silver_audit",
             "evaluation_gold",
             "evaluation_results_directory",
         },
@@ -474,6 +490,10 @@ def load_config(path: str | Path) -> ProjectConfig:
                 paths, "evaluation_candidates", "paths"
             ),
             evaluation_review=_string(paths, "evaluation_review", "paths"),
+            evaluation_silver=_string(paths, "evaluation_silver", "paths"),
+            evaluation_silver_audit=_string(
+                paths, "evaluation_silver_audit", "paths"
+            ),
             evaluation_gold=_string(paths, "evaluation_gold", "paths"),
             evaluation_results_directory=_string(
                 paths, "evaluation_results_directory", "paths"

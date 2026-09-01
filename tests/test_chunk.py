@@ -32,6 +32,8 @@ def _paths(tmp_path: Path) -> ResolvedPaths:
         qdrant_directory=tmp_path / "qdrant",
         evaluation_candidates=tmp_path / "evaluation" / "candidates.jsonl",
         evaluation_review=tmp_path / "evaluation" / "review.csv",
+        evaluation_silver=tmp_path / "evaluation" / "silver.jsonl",
+        evaluation_silver_audit=tmp_path / "evaluation" / "silver_audit.csv",
         evaluation_gold=tmp_path / "evaluation" / "gold.jsonl",
         evaluation_results_directory=tmp_path / "evaluation" / "results",
     )

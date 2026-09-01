@@ -12,6 +12,8 @@ reranker_model_directory = "models/mmarco-mMiniLMv2-L12-H384-v1"
 qdrant_directory = "indexes/qdrant"
 evaluation_candidates = "evaluation/candidates.jsonl"
 evaluation_review = "evaluation/review.csv"
+evaluation_silver = "evaluation/silver.jsonl"
+evaluation_silver_audit = "evaluation/silver_audit.csv"
 evaluation_gold = "evaluation/gold.jsonl"
 evaluation_results_directory = "evaluation/results"
 

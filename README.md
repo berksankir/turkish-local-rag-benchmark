@@ -14,9 +14,10 @@ yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasör�
 indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
 gerçek page-safe chunking ve Qdrant local-mode dense corpus indeksi de tamamlanmıştır.
 Elli AI-generated evaluation adayının kaynak span bütünlüğü otomatik olarak
-doğrulanmıştır; ancak kayıtlar henüz insan incelemesinden geçmemiştir. Bu adaylarla
-yapılan eski retrieval koşusu yalnızca provisional teknik sonuç olarak arşivlenmiştir
-ve nihai gold benchmark değildir.
+doğrulanmış ve ayrı bir synthetic silver sete yansıtılmıştır; bu otomatik kontrol
+insan onayı değildir. Daha düşük inceleme yükü için 20 kayıtlık deterministik audit
+örneği hazırlanmıştır. Bu adaylarla yapılan eski retrieval koşusu yalnızca
+provisional teknik sonuç olarak arşivlenmiştir ve nihai gold benchmark değildir.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
@@ -221,8 +222,8 @@ Model CPU, `local_files_only=True`, maksimum 512 token ve batch size 4 ile
 için kullanılır; citation alanları trusted chunk metadata'sından gelir. Model
 Apache-2.0 lisanslıdır. mMARCO model kartının eğitim dili listesinde Türkçe
 bulunmadığından bu bileşen açıkça zero-shot deneydir. Fayda sağladığı
-varsayılmaz; karar, adaylar gerçek kullanıcı onayından geçtikten sonra oluşturulacak
-aynı gold setteki retrieval evaluation'a bırakılır.
+varsayılmaz. Silver değerlendirme yalnız provisional teknik karşılaştırma sağlar;
+nihai karar gerçek kullanıcı onayından geçen gold değerlendirmeye bırakılır.
 
 ## Evaluation adayları
 
@@ -232,16 +233,41 @@ exact source span'lerinin belirtilen extracted belge ve fiziksel sayfada birebir
 bulunduğunu doğrular; bu kontrol insan onayı değildir. Cevaplanamaz kayıtların
 gerçekten corpus dışı olup olmadığı da insan tarafından incelenmelidir.
 
-İnceleme dosyası `evaluation/review.csv` içinde 50 kayıt da `pending` durumundadır.
-CSV'de yalnızca `review_status` ve `review_notes` alanları düzenlenmelidir;
-candidate alanları ve `proposed_split` değiştirilirse doğrulayıcı kaydı reddeder.
-Geçerli durumlar `pending`, `approved`, `needs_changes` ve `rejected` değerleridir.
-Kaynak span'deki satır sonları CSV'de okunabilirlik için `\n` olarak gösterilir.
+`evaluation/silver.jsonl`, 50 adayın tamamını kimlikleri ve içerikleri değişmeden
+içeren synthetic silver settir. Answerable kayıtların span/page bütünlüğü otomatik
+doğrulanmıştır; unanswerable kayıtların corpus dışı olduğu otomatik olarak kabul
+edilmez. Silver hiçbir yerde human-reviewed veya gold olarak sunulmamalıdır.
+
+İnceleme yükünü azaltan `evaluation/silver_audit.csv`, 10 unanswerable kaydın
+tamamını ve dokuz belgenin her birini temsil edecek şekilde seçilmiş 10 answerable
+kaydı içerir. Ek answerable kota, en çok adayı bulunan belgeye deterministik olarak
+verilir; seçim retrieval sonuçlarından türetilmez. Audit'teki 20 kayıt da başlangıçta
+`pending` durumundadır. Yirmi kaydın tamamı sorunsuz `approved` olduğunda silver
+set “human-audited sample” olarak tanımlanabilir; yine de “human-reviewed gold”
+olmaz. Audit bir sorun bulursa silver provisional kalır ve ilgili aday ayrıca
+düzeltilmelidir.
+
+Tam gold incelemesi için `evaluation/review.csv` içindeki 50 kayıt korunur ve
+başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status` ve
+`review_notes` alanları düzenlenmelidir; candidate alanları ve `proposed_split`
+değiştirilirse doğrulayıcı kaydı reddeder. Geçerli durumlar `pending`, `approved`,
+`needs_changes` ve `rejected` değerleridir. Kaynak span'deki satır sonları CSV'de
+okunabilirlik için `\n` olarak gösterilir.
 
 Review dosyasını ve otomatik span bütünlüğünü kontrol etmek için:
 
 ```powershell
 .\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml validate
+```
+
+Mevcut artifact'lar sessizce ezilmez. Silver'ı yeniden üretmek için açık
+overwrite gerekir. Audit oluşturma komutu yalnızca dosya henüz yokken kullanılır;
+var olan insan notlarını ezmez:
+
+```powershell
+.\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml build-silver --overwrite
+.\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml prepare-silver-audit
+.\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml validate-silver-audit
 ```
 
 Gold builder yalnızca `approved` kayıtları aktarır; diğer üç durum gold dışında
@@ -253,7 +279,21 @@ kalır. Kullanıcı review'u tamamlandıktan sonra çalıştırılacak komut:
 
 Final evaluator, bütün kayıtlar insan tarafından `approved` veya `rejected`
 olarak sonuçlandırılmadan çalışmayı reddeder. `rejected` kayıtlar gold'a
-girmez; benchmark yalnızca `approved` kayıtları kullanır.
+girmez; gold benchmark yalnızca `approved` kayıtları kullanır. Dataset seçimi
+açıkça yapılır ve sonuçlar birbirinden ayrı klasörlere yazılır:
+
+```powershell
+# Provisional synthetic silver benchmark; henüz çalıştırılmadı
+.\.venv\Scripts\python.exe -m turkish_local_rag.evaluate --config config\default.toml --dataset silver
+
+# Nihai human-reviewed gold benchmark; review tamamlanana kadar bloke
+.\.venv\Scripts\python.exe -m turkish_local_rag.evaluate --config config\default.toml --dataset gold
+```
+
+Silver çıktıları `evaluation/results/silver/`, gold çıktıları
+`evaluation/results/gold/` altında üretilir. Silver JSON/CSV/Markdown çıktıları
+dataset türünü ve audit durumlarını taşır; otomatik doğrulama insan onayı gibi
+sunulmaz.
 AI adaylarıyla yapılan eski teknik koşunun değiştirilmemiş çıktıları
 `evaluation/provisional/2026-09-01-ai-candidates/` altındadır. Bunlar pipeline'ın
 çalıştığını gösterir; nihai benchmark sonucu olarak kullanılamaz.

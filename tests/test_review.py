@@ -1,5 +1,6 @@
 from dataclasses import replace
 import csv
+import json
 from pathlib import Path
 
 import pytest
@@ -12,10 +13,13 @@ from turkish_local_rag.review import (
     approved_candidates,
     approved_split_counts,
     build_gold_records,
+    build_silver_records,
     load_review,
+    select_silver_audit_candidates,
     validate_review_grounding,
     write_gold,
     write_pending_review,
+    write_silver,
 )
 
 
@@ -27,13 +31,19 @@ SOURCE = SourceDocument(
 )
 
 
-def _candidate(identifier: str, *, answerable: bool = True, page: int = 3) -> Candidate:
+def _candidate(
+    identifier: str,
+    *,
+    answerable: bool = True,
+    page: int = 3,
+    document_id: str = "test-document",
+) -> Candidate:
     return Candidate(
         candidate_id=identifier,
         question=f"Question {identifier}?",
         proposed_reference_answer="Reference answer.",
         required_key_facts=("fact",) if answerable else (),
-        document_id="test-document" if answerable else None,
+        document_id=document_id if answerable else None,
         physical_pages=(page,) if answerable else (),
         exact_source_span="Exact source." if answerable else None,
         answerable=answerable,
@@ -168,3 +178,57 @@ def test_review_file_is_never_silently_overwritten(tmp_path: Path) -> None:
 
     with pytest.raises(ReviewError, match="not overwritten"):
         write_pending_review([candidate], path)
+
+
+def test_silver_contains_every_candidate_unchanged_and_requires_overwrite(
+    tmp_path: Path,
+) -> None:
+    candidates = [
+        _candidate("candidate-001"),
+        _candidate("candidate-041", answerable=False),
+    ]
+    path = tmp_path / "silver.jsonl"
+
+    payloads = build_silver_records(candidates)
+    output, count = write_silver(candidates, path)
+
+    assert count == 2
+    assert output == path
+    assert [payload["candidate_id"] for payload in payloads] == [
+        candidate.candidate_id for candidate in candidates
+    ]
+    written = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    assert written == list(payloads)
+    with pytest.raises(ReviewError, match="use --overwrite"):
+        write_silver(candidates, path)
+
+
+def test_silver_audit_is_deterministic_document_stratified_and_keeps_unanswerable(
+) -> None:
+    candidates = [
+        _candidate("candidate-001", document_id="doc-a"),
+        _candidate("candidate-002", document_id="doc-a"),
+        _candidate("candidate-003", document_id="doc-a"),
+        _candidate("candidate-004", document_id="doc-b"),
+        _candidate("candidate-005", document_id="doc-b"),
+        _candidate("candidate-006", document_id="doc-c"),
+        _candidate("candidate-041", answerable=False),
+        _candidate("candidate-042", answerable=False),
+    ]
+
+    selected = select_silver_audit_candidates(candidates, answerable_count=4)
+
+    assert [candidate.candidate_id for candidate in selected] == [
+        "candidate-001",
+        "candidate-002",
+        "candidate-004",
+        "candidate-006",
+        "candidate-041",
+        "candidate-042",
+    ]
+    assert select_silver_audit_candidates(candidates, answerable_count=4) == selected
+    assert {candidate.document_id for candidate in selected if candidate.answerable} == {
+        "doc-a",
+        "doc-b",
+        "doc-c",
+    }

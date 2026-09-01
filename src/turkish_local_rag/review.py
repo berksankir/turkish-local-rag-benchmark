@@ -60,6 +60,7 @@ PROPOSED_DEV_IDS = frozenset(
         "candidate-042",
     }
 )
+SILVER_AUDIT_ANSWERABLE_COUNT = 10
 
 
 class ReviewError(ValueError):
@@ -214,6 +215,89 @@ def approved_split_counts(
     return counts
 
 
+def select_silver_audit_candidates(
+    candidates: Sequence[Candidate],
+    *,
+    answerable_count: int = SILVER_AUDIT_ANSWERABLE_COUNT,
+) -> tuple[Candidate, ...]:
+    """Select all unanswerable and a deterministic document-stratified sample."""
+
+    if answerable_count < 1:
+        raise ReviewError("silver audit answerable_count must be positive")
+    by_document: dict[str, list[Candidate]] = {}
+    for candidate in candidates:
+        if candidate.answerable:
+            if candidate.document_id is None:
+                raise ReviewError(
+                    f"answerable candidate lacks document_id: {candidate.candidate_id}"
+                )
+            by_document.setdefault(candidate.document_id, []).append(candidate)
+    total_answerable = sum(len(group) for group in by_document.values())
+    if total_answerable < answerable_count:
+        raise ReviewError(
+            "silver audit answerable sample exceeds available candidates: "
+            f"requested={answerable_count}, available={total_answerable}"
+        )
+    for group in by_document.values():
+        group.sort(key=lambda candidate: candidate.candidate_id)
+
+    selected_ids: set[str] = {
+        candidate.candidate_id for candidate in candidates if not candidate.answerable
+    }
+    document_order = sorted(
+        by_document, key=lambda document_id: (-len(by_document[document_id]), document_id)
+    )
+    selected_answerable = 0
+    for document_id in document_order[:answerable_count]:
+        selected_ids.add(by_document[document_id].pop(0).candidate_id)
+        selected_answerable += 1
+    while selected_answerable < answerable_count:
+        remaining_documents = [
+            document_id for document_id in document_order if by_document[document_id]
+        ]
+        document_id = min(
+            remaining_documents,
+            key=lambda item: (-len(by_document[item]), item),
+        )
+        selected_ids.add(by_document[document_id].pop(0).candidate_id)
+        selected_answerable += 1
+
+    return tuple(
+        candidate for candidate in candidates if candidate.candidate_id in selected_ids
+    )
+
+
+def build_silver_records(
+    candidates: Sequence[Candidate],
+) -> tuple[dict[str, Any], ...]:
+    """Build the synthetic silver set without implying human approval."""
+
+    return tuple(
+        _candidate_payload(candidate, _proposed_split(candidate.candidate_id))
+        for candidate in candidates
+    )
+
+
+def write_silver(
+    candidates: Sequence[Candidate],
+    path: str | Path,
+    *,
+    overwrite: bool = False,
+) -> tuple[Path, int]:
+    """Atomically write all validated candidates as silver, with explicit overwrite."""
+
+    silver_path = Path(path)
+    if silver_path.exists() and not overwrite:
+        raise ReviewError(f"silver file already exists; use --overwrite: {silver_path}")
+    payloads = build_silver_records(candidates)
+    text = "".join(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+        for payload in payloads
+    )
+    _write_text_atomic(silver_path, text, encoding="utf-8")
+    return silver_path, len(payloads)
+
+
 def build_gold_records(records: Sequence[ReviewRecord]) -> tuple[dict[str, Any], ...]:
     """Build gold payloads from approved rows; all other statuses are excluded."""
 
@@ -221,20 +305,7 @@ def build_gold_records(records: Sequence[ReviewRecord]) -> tuple[dict[str, Any],
     for record in records:
         if record.review_status != "approved":
             continue
-        candidate = record.candidate
-        payloads.append(
-            {
-                "candidate_id": candidate.candidate_id,
-                "question": candidate.question,
-                "proposed_reference_answer": candidate.proposed_reference_answer,
-                "required_key_facts": list(candidate.required_key_facts),
-                "document_id": candidate.document_id,
-                "physical_pages": list(candidate.physical_pages),
-                "exact_source_span": candidate.exact_source_span,
-                "answerable": candidate.answerable,
-                "split": record.proposed_split,
-            }
-        )
+        payloads.append(_candidate_payload(record.candidate, record.proposed_split))
     return tuple(payloads)
 
 
@@ -261,6 +332,20 @@ def write_gold(
 def review_status_counts(records: Sequence[ReviewRecord]) -> dict[str, int]:
     counts = Counter(record.review_status for record in records)
     return {status: counts.get(status, 0) for status in sorted(VALID_REVIEW_STATUSES)}
+
+
+def _candidate_payload(candidate: Candidate, split: str) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate.candidate_id,
+        "question": candidate.question,
+        "proposed_reference_answer": candidate.proposed_reference_answer,
+        "required_key_facts": list(candidate.required_key_facts),
+        "document_id": candidate.document_id,
+        "physical_pages": list(candidate.physical_pages),
+        "exact_source_span": candidate.exact_source_span,
+        "answerable": candidate.answerable,
+        "split": split,
+    }
 
 
 def _candidate_to_review_row(candidate: Candidate) -> dict[str, str]:
@@ -381,6 +466,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--config", default="config/default.toml")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("prepare", help="create a new all-pending review CSV")
+    silver_parser = subparsers.add_parser(
+        "build-silver",
+        help="write all automatically validated candidates as synthetic silver JSONL",
+    )
+    silver_parser.add_argument("--overwrite", action="store_true")
+    subparsers.add_parser(
+        "prepare-silver-audit",
+        help="create a pending audit CSV with all unanswerable and 10 answerable rows",
+    )
+    subparsers.add_parser(
+        "validate-silver-audit",
+        help="validate silver audit identity, statuses, and answerable grounding",
+    )
     subparsers.add_parser("validate", help="validate review identity, statuses, and spans")
     build_parser = subparsers.add_parser(
         "build-gold", help="write only explicitly approved records to gold JSONL"
@@ -400,6 +498,78 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "records": len(candidates),
                         "pending": len(candidates),
                         "verified_source_spans": grounding.verified_source_spans,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.command == "build-silver":
+            output, count = write_silver(
+                candidates, paths.evaluation_silver, overwrite=args.overwrite
+            )
+            print(
+                json.dumps(
+                    {
+                        "dataset_kind": "silver",
+                        "human_reviewed": False,
+                        "path": str(output),
+                        "records": count,
+                        "verified_source_spans": grounding.verified_source_spans,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.command == "prepare-silver-audit":
+            audit_candidates = select_silver_audit_candidates(candidates)
+            output = write_pending_review(
+                audit_candidates, paths.evaluation_silver_audit
+            )
+            print(
+                json.dumps(
+                    {
+                        "answerable": sum(
+                            candidate.answerable for candidate in audit_candidates
+                        ),
+                        "path": str(output),
+                        "pending": len(audit_candidates),
+                        "records": len(audit_candidates),
+                        "unanswerable": sum(
+                            not candidate.answerable for candidate in audit_candidates
+                        ),
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.command == "validate-silver-audit":
+            audit_candidates = select_silver_audit_candidates(candidates)
+            audit_reviews = load_review(
+                paths.evaluation_silver_audit, audit_candidates
+            )
+            audit_grounding = validate_review_grounding(
+                audit_reviews,
+                sources,
+                paths.extracted_pages_directory,
+                expected_total=len(audit_candidates),
+                expected_answerable=sum(
+                    candidate.answerable for candidate in audit_candidates
+                ),
+                expected_unanswerable=sum(
+                    not candidate.answerable for candidate in audit_candidates
+                ),
+            )
+            print(
+                json.dumps(
+                    {
+                        "records": len(audit_reviews),
+                        "statuses": review_status_counts(audit_reviews),
+                        "verified_source_spans": (
+                            audit_grounding.verified_source_spans
+                        ),
                     },
                     ensure_ascii=False,
                     sort_keys=True,

@@ -1,4 +1,4 @@
-"""Validate reviewed gold data and benchmark local retrieval pipelines."""
+"""Validate explicit gold or synthetic silver data and benchmark retrieval."""
 
 from __future__ import annotations
 
@@ -40,6 +40,7 @@ from turkish_local_rag.retrieve import (
 
 PIPELINES = ("dense", "bm25", "hybrid_rrf", "hybrid_reranked")
 SPLITS = ("dev", "test")
+DATASET_KINDS = ("gold", "silver")
 EXPECTED_SPLIT_COUNTS = {
     "dev": {"total": 10, "answerable": 8, "unanswerable": 2},
     "test": {"total": 40, "answerable": 32, "unanswerable": 8},
@@ -52,7 +53,7 @@ RESULT_FILENAMES = {
 
 
 class EvaluationError(RuntimeError):
-    """Raised when reviewed gold data or benchmark execution is invalid."""
+    """Raised when an evaluation set or benchmark execution is invalid."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,34 +70,75 @@ def load_gold(
 ) -> tuple[GoldRecord, ...]:
     """Load gold JSONL and prove every record equals its approved candidate."""
 
-    gold_path = Path(path)
+    return _load_evaluation_set(
+        path,
+        approved_candidates,
+        expected_split_counts=expected_split_counts,
+        dataset_kind="gold",
+        expected_candidate_label="an approved candidate",
+        changed_message="gold record changed after review",
+    )
+
+
+def load_silver(
+    path: str | Path,
+    candidates: Sequence[Candidate],
+    *,
+    expected_split_counts: Mapping[str, Mapping[str, int]] = EXPECTED_SPLIT_COUNTS,
+) -> tuple[GoldRecord, ...]:
+    """Load silver JSONL and prove it is an unchanged candidate-set projection."""
+
+    return _load_evaluation_set(
+        path,
+        candidates,
+        expected_split_counts=expected_split_counts,
+        dataset_kind="silver",
+        expected_candidate_label="a source candidate",
+        changed_message="silver record differs from its source candidate",
+    )
+
+
+def _load_evaluation_set(
+    path: str | Path,
+    expected_candidates: Sequence[Candidate],
+    *,
+    expected_split_counts: Mapping[str, Mapping[str, int]],
+    dataset_kind: str,
+    expected_candidate_label: str,
+    changed_message: str,
+) -> tuple[GoldRecord, ...]:
+    dataset_path = Path(path)
     try:
-        lines = gold_path.read_text(encoding="utf-8").splitlines()
+        lines = dataset_path.read_text(encoding="utf-8").splitlines()
     except FileNotFoundError as exc:
-        raise EvaluationError(f"gold file not found: {gold_path}") from exc
-    approved_by_id = {
-        candidate.candidate_id: candidate for candidate in approved_candidates
+        raise EvaluationError(
+            f"{dataset_kind} file not found: {dataset_path}"
+        ) from exc
+    expected_by_id = {
+        candidate.candidate_id: candidate for candidate in expected_candidates
     }
     records: list[GoldRecord] = []
     seen_ids: set[str] = set()
     expected_keys = CANDIDATE_KEYS | {"split"}
     for line_number, line in enumerate(lines, start=1):
         if not line.strip():
-            raise EvaluationError(f"blank gold JSONL record at line {line_number}")
+            raise EvaluationError(
+                f"blank {dataset_kind} JSONL record at line {line_number}"
+            )
         try:
             raw = json.loads(line)
         except json.JSONDecodeError as exc:
             raise EvaluationError(
-                f"invalid gold JSON at line {line_number}: {exc}"
+                f"invalid {dataset_kind} JSON at line {line_number}: {exc}"
             ) from exc
         if not isinstance(raw, dict) or set(raw) != expected_keys:
             raise EvaluationError(
-                f"gold line {line_number} must contain approved candidate fields and split"
+                f"{dataset_kind} line {line_number} must contain candidate fields and split"
             )
         split = raw.pop("split")
         if split not in SPLITS:
             raise EvaluationError(
-                f"gold line {line_number}.split must be dev or test"
+                f"{dataset_kind} line {line_number}.split must be dev or test"
             )
         try:
             candidate = parse_candidate_record(raw, line_number)
@@ -104,25 +146,27 @@ def load_gold(
             raise EvaluationError(str(exc)) from exc
         if candidate.candidate_id in seen_ids:
             raise EvaluationError(
-                f"duplicate gold candidate_id: {candidate.candidate_id}"
+                f"duplicate {dataset_kind} candidate_id: {candidate.candidate_id}"
             )
         seen_ids.add(candidate.candidate_id)
-        approved = approved_by_id.get(candidate.candidate_id)
-        if approved is None:
+        expected = expected_by_id.get(candidate.candidate_id)
+        if expected is None:
             raise EvaluationError(
-                f"gold record is not an approved candidate: {candidate.candidate_id}"
+                f"{dataset_kind} record is not {expected_candidate_label}: "
+                f"{candidate.candidate_id}"
             )
-        if candidate != approved:
+        if candidate != expected:
             raise EvaluationError(
-                f"gold record changed after review: {candidate.candidate_id}"
+                f"{changed_message}: {candidate.candidate_id}"
             )
         records.append(GoldRecord(candidate=candidate, split=split))
 
-    if seen_ids != set(approved_by_id):
-        missing = sorted(set(approved_by_id) - seen_ids)
-        extra = sorted(seen_ids - set(approved_by_id))
+    if seen_ids != set(expected_by_id):
+        missing = sorted(set(expected_by_id) - seen_ids)
+        extra = sorted(seen_ids - set(expected_by_id))
         raise EvaluationError(
-            f"gold/approved candidate ID mismatch: missing={missing}, extra={extra}"
+            f"{dataset_kind}/{expected_candidate_label} ID mismatch: "
+            f"missing={missing}, extra={extra}"
         )
     _validate_split_counts(records, expected_split_counts)
     return tuple(records)
@@ -242,10 +286,15 @@ def aggregate_results(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 def run_benchmark(
     config_path: str | Path,
     *,
+    dataset: str = "gold",
     overwrite: bool = False,
 ) -> dict[str, Path]:
     """Run all four local pipelines and atomically write JSON, CSV, and Markdown."""
 
+    if dataset not in DATASET_KINDS:
+        raise EvaluationError(
+            f"dataset must be one of {', '.join(DATASET_KINDS)}: {dataset!r}"
+        )
     started_at = datetime.now(timezone.utc)
     initialization_start = perf_counter()
     config = load_config(config_path)
@@ -257,37 +306,76 @@ def run_benchmark(
         approved_candidates,
         approved_split_counts,
         load_review,
+        review_status_counts,
+        select_silver_audit_candidates,
         validate_review_grounding,
     )
 
-    reviews = load_review(paths.evaluation_review, candidates)
-    validate_review_grounding(reviews, sources, paths.extracted_pages_directory)
-    unresolved = [
-        review.candidate.candidate_id
-        for review in reviews
-        if review.review_status in {"pending", "needs_changes"}
-    ]
-    if unresolved:
-        raise EvaluationError(
-            "final benchmark requires every review to be resolved as approved or "
-            f"rejected: unresolved={len(unresolved)}"
+    if dataset == "gold":
+        reviews = load_review(paths.evaluation_review, candidates)
+        validate_review_grounding(reviews, sources, paths.extracted_pages_directory)
+        unresolved = [
+            review.candidate.candidate_id
+            for review in reviews
+            if review.review_status in {"pending", "needs_changes"}
+        ]
+        if unresolved:
+            raise EvaluationError(
+                "final benchmark requires every review to be resolved as approved or "
+                f"rejected: unresolved={len(unresolved)}"
+            )
+        approved = approved_candidates(reviews)
+        if not approved:
+            raise EvaluationError(
+                "final benchmark requires at least one explicitly approved candidate"
+            )
+        evaluation_records = load_gold(
+            paths.evaluation_gold,
+            approved,
+            expected_split_counts=approved_split_counts(reviews),
         )
-    approved = approved_candidates(reviews)
-    if not approved:
-        raise EvaluationError(
-            "final benchmark requires at least one explicitly approved candidate"
+        evaluation_set_path = paths.evaluation_gold
+        review_artifact_path = paths.evaluation_review
+        dataset_metadata = {
+            "kind": "gold",
+            "human_reviewed": True,
+            "description": "Only explicitly human-approved records.",
+            "review_statuses": review_status_counts(reviews),
+        }
+    else:
+        evaluation_records = load_silver(paths.evaluation_silver, candidates)
+        audit_candidates = select_silver_audit_candidates(candidates)
+        audit_reviews = load_review(paths.evaluation_silver_audit, audit_candidates)
+        validate_review_grounding(
+            audit_reviews,
+            sources,
+            paths.extracted_pages_directory,
+            expected_total=len(audit_candidates),
+            expected_answerable=sum(
+                candidate.answerable for candidate in audit_candidates
+            ),
+            expected_unanswerable=sum(
+                not candidate.answerable for candidate in audit_candidates
+            ),
         )
-    gold = load_gold(
-        paths.evaluation_gold,
-        approved,
-        expected_split_counts=approved_split_counts(reviews),
-    )
+        evaluation_set_path = paths.evaluation_silver
+        review_artifact_path = paths.evaluation_silver_audit
+        dataset_metadata = {
+            "kind": "silver",
+            "human_reviewed": False,
+            "description": (
+                "AI-generated candidate set with automatic answerable span/page "
+                "integrity checks; automatic validation is not human approval."
+            ),
+            "audit_sample_records": len(audit_reviews),
+            "audit_statuses": review_status_counts(audit_reviews),
+        }
     chunks = load_chunk_corpus(paths.chunks_directory, sources)
     if config.reranker.top_k < 5:
         raise EvaluationError("common retrieval result limit must be at least 5")
     result_limit = config.reranker.top_k
     output_paths = {
-        key: paths.evaluation_results_directory / filename
+        key: paths.evaluation_results_directory / dataset / filename
         for key, filename in RESULT_FILENAMES.items()
     }
     existing = [path for path in output_paths.values() if path.exists()]
@@ -336,8 +424,8 @@ def run_benchmark(
             rerank_hits,
         )
         initialization_seconds = perf_counter() - initialization_start
-        ordered_gold = sorted(
-            gold,
+        ordered_records = sorted(
+            evaluation_records,
             key=lambda record: (
                 SPLITS.index(record.split), record.candidate.candidate_id
             ),
@@ -345,7 +433,7 @@ def run_benchmark(
         results: list[dict[str, Any]] = []
         benchmark_start = perf_counter()
         for pipeline in PIPELINES:
-            for record in ordered_gold:
+            for record in ordered_records:
                 start = perf_counter()
                 hits = _run_pipeline(
                     pipeline,
@@ -361,9 +449,9 @@ def run_benchmark(
                     rerank_hits,
                 )
                 latency_ms = (perf_counter() - start) * 1000.0
-                results.append(
-                    score_retrieval(record, pipeline, hits, latency_ms)
-                )
+                result = score_retrieval(record, pipeline, hits, latency_ms)
+                result["dataset_kind"] = dataset
+                results.append(result)
         benchmark_seconds = perf_counter() - benchmark_start
     finally:
         client.close()
@@ -371,20 +459,27 @@ def run_benchmark(
     current_rss, peak_rss = _process_memory_bytes()
     finished_at = datetime.now(timezone.utc)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "dataset": dataset_metadata,
         "protocol": {
             "pipelines": list(PIPELINES),
             "common_result_limit": result_limit,
             "relevance": "matching trusted document_id and physical page",
             "mrr_scope": f"returned top-{result_limit}",
             "latency_scope": "per-query retrieval; model loading and warm-up excluded",
-            "split_policy": (
-                "fixed before retrieval: dev=8 answerable+2 unanswerable; "
-                "test=32 answerable+8 unanswerable"
-            ),
+            "split_policy": _split_policy(evaluation_records),
         },
         "reproducibility": _reproducibility_metadata(
-            config_path, config, paths, sources, chunks, started_at, finished_at
+            config_path,
+            config,
+            paths,
+            sources,
+            chunks,
+            started_at,
+            finished_at,
+            dataset_kind=dataset,
+            evaluation_set_path=evaluation_set_path,
+            review_artifact_path=review_artifact_path,
         ),
         "runtime": {
             "initialization_seconds": initialization_seconds,
@@ -509,6 +604,17 @@ def _mean_metric(results: Sequence[Mapping[str, Any]], key: str) -> float:
     return sum(float(result["metrics"][key]) for result in results) / len(results)
 
 
+def _split_policy(records: Sequence[GoldRecord]) -> str:
+    parts: list[str] = []
+    for split in SPLITS:
+        selected = [record for record in records if record.split == split]
+        answerable = sum(record.candidate.answerable for record in selected)
+        parts.append(
+            f"{split}={answerable} answerable+{len(selected) - answerable} unanswerable"
+        )
+    return "fixed before retrieval: " + "; ".join(parts)
+
+
 def _reproducibility_metadata(
     config_path: str | Path,
     config: ProjectConfig,
@@ -517,6 +623,10 @@ def _reproducibility_metadata(
     chunks: Sequence[Any],
     started_at: datetime,
     finished_at: datetime,
+    *,
+    dataset_kind: str,
+    evaluation_set_path: Path,
+    review_artifact_path: Path,
 ) -> dict[str, Any]:
     chunk_hashes = {
         source.id: _sha256_file(
@@ -543,8 +653,9 @@ def _reproducibility_metadata(
         "config": asdict(config),
         "manifest_sha256": _sha256_file(paths.source_manifest),
         "candidate_set_sha256": _sha256_file(paths.evaluation_candidates),
-        "human_review_sha256": _sha256_file(paths.evaluation_review),
-        "gold_sha256": _sha256_file(paths.evaluation_gold),
+        "dataset_kind": dataset_kind,
+        "evaluation_set_sha256": _sha256_file(evaluation_set_path),
+        "review_artifact_sha256": _sha256_file(review_artifact_path),
         "chunk_file_sha256": chunk_hashes,
         "logical_corpus_sha256": logical_corpus.hexdigest(),
         "document_count": len(sources),
@@ -554,6 +665,7 @@ def _reproducibility_metadata(
 
 def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
     fields = [
+        "dataset_kind",
         "candidate_id",
         "split",
         "pipeline",
@@ -579,6 +691,7 @@ def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
         top_hit = result["hits"][0] if result["hits"] else {}
         writer.writerow(
             {
+                "dataset_kind": result["dataset_kind"],
                 "candidate_id": result["candidate_id"],
                 "split": result["split"],
                 "pipeline": result["pipeline"],
@@ -607,10 +720,33 @@ def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _render_markdown(payload: Mapping[str, Any]) -> str:
+    dataset = payload["dataset"]
+    if dataset["kind"] == "silver":
+        title = "# Silver retrieval benchmark"
+        dataset_statement = (
+            "Bu rapor AI-generated silver evaluation set üzerinde üretilmiştir. "
+            "Answerable span/page kontrolleri otomatiktir ve insan onayı değildir."
+        )
+        audit_statement = (
+            "Human audit durumu: "
+            + ", ".join(
+                f"{status}={count}"
+                for status, count in dataset["audit_statuses"].items()
+            )
+            + "."
+        )
+    else:
+        title = "# Gold retrieval benchmark"
+        dataset_statement = (
+            "Bu rapor yalnızca açıkça insan tarafından approved olarak işaretlenmiş "
+            "gold kayıtlar üzerinde üretilmiştir."
+        )
+        audit_statement = "Rejected kayıtlar gold sete dahil edilmemiştir."
     lines = [
-        "# Retrieval benchmark",
+        title,
         "",
-        "Bu rapor insan onaylı gold set üzerinde CPU ve local modellerle üretilmiştir.",
+        dataset_statement,
+        audit_statement,
         "Unanswerable kayıtlar retrieval kalite paydalarına alınmamış, latency ölçümüne dahil edilmiştir.",
         "MRR, ortak top-10 sonuç listesi üzerinde hesaplanmıştır.",
         "",
@@ -650,7 +786,9 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
             "## Reproducibility",
             "",
             f"- Timestamp: `{reproducibility['finished_at_utc']}`",
-            f"- Gold SHA-256: `{reproducibility['gold_sha256']}`",
+            f"- Dataset kind: `{reproducibility['dataset_kind']}`",
+            f"- Evaluation set SHA-256: `{reproducibility['evaluation_set_sha256']}`",
+            f"- Review/audit artifact SHA-256: `{reproducibility['review_artifact_sha256']}`",
             f"- Logical corpus SHA-256: `{reproducibility['logical_corpus_sha256']}`",
             f"- Embedding revision: `{reproducibility['embedding_model_revision']}`",
             f"- Reranker revision: `{reproducibility['reranker_model_revision']}`",
@@ -750,13 +888,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default="config/default.toml")
     parser.add_argument(
+        "--dataset",
+        choices=DATASET_KINDS,
+        default="gold",
+        help="evaluation set kind; gold remains the safe default",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="explicitly replace existing benchmark result files",
     )
     args = parser.parse_args(argv)
     try:
-        outputs = run_benchmark(args.config, overwrite=args.overwrite)
+        outputs = run_benchmark(
+            args.config, dataset=args.dataset, overwrite=args.overwrite
+        )
     except (
         CandidateValidationError,
         EvaluationError,
