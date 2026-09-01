@@ -9,7 +9,12 @@ import pytest
 
 from turkish_local_rag.config import ExtractionConfig, ResolvedPaths
 from turkish_local_rag.download import SourceDocument
-from turkish_local_rag.extract import ExtractionError, extract_document
+from turkish_local_rag.extract import (
+    ExtractionError,
+    _remove_repeated_marginal_content,
+    _repair_pdf_glyphs,
+    extract_document,
+)
 
 
 SOURCE = SourceDocument(
@@ -140,3 +145,45 @@ def test_missing_download_metadata_blocks_extraction(tmp_path: Path) -> None:
         extract_document(SOURCE, paths, SETTINGS)
 
     assert not paths.extracted_pages_directory.exists()
+
+
+def test_evidenced_pdf_glyph_mappings_are_repaired() -> None:
+    assert _repair_pdf_glyphs("Ün\u0d74vers\u0d74tes\u0d74 resm\u0d88gazete") == (
+        "Üniversitesi resmigazete"
+    )
+
+
+def test_repeated_marginal_lines_and_page_counters_are_removed() -> None:
+    pages = [
+        (
+            page_number,
+            1000.0,
+            [
+                {
+                    "block_id": f"doc:p{page_number}:b0",
+                    "bbox": [20.0, 10.0, 300.0, 30.0],
+                    "text": "Repeated header",
+                },
+                {
+                    "block_id": f"doc:p{page_number}:b1",
+                    "bbox": [20.0, 200.0, 300.0, 500.0],
+                    "text": f"Body {page_number}",
+                },
+                {
+                    "block_id": f"doc:p{page_number}:b2",
+                    "bbox": [20.0, 950.0, 300.0, 980.0],
+                    "text": f"Repeated footer\n{page_number}/5",
+                },
+            ],
+        )
+        for page_number in range(1, 6)
+    ]
+
+    _remove_repeated_marginal_content(pages, total_pages=5)
+
+    assert [[block["text"] for block in blocks] for _, _, blocks in pages] == [
+        [f"Body {page_number}"] for page_number in range(1, 6)
+    ]
+    assert [blocks[0]["block_id"] for _, _, blocks in pages] == [
+        f"doc:p{page_number}:b0" for page_number in range(1, 6)
+    ]

@@ -11,9 +11,9 @@ sayfa-seviyesi extraction, yapı-farkındalıklı chunking, BM25, yerel E5 dense
 retrieval, RRF hybrid retrieval ve optional cross-encoder reranking katmanlarını
 içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modelleri
 yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
-indirilip hash'leri doğrulanmıştır; gerçek extraction, chunking, corpus indeksi ve
-benchmark deneyleri henüz çalıştırılmamıştır. Dolayısıyla yayımlanmış bir
-benchmark sonucu yoktur.
+indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
+chunking, corpus indeksi ve benchmark deneyleri henüz çalıştırılmamıştır. Dolayısıyla
+yayımlanmış bir benchmark sonucu yoktur.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
@@ -80,6 +80,15 @@ AGPL şartlarının bu projenin dağıtım biçimiyle uyumluluğu kullanıcı ta
 değerlendirilmelidir. Bu aşamada OCR uygulanmaz; metin katmanı olmayan sayfalar
 varsayılan olarak boş çıktı üretmeden atlanır ancak fiziksel sayfa numarası
 değiştirilmez.
+
+2026-09-01 extraction checkpoint'inde PDF'lerdeki 69 fiziksel sayfa yeniden
+sayılmış; 68 metin sayfası için 68 JSONL kaydı ve toplam 259.126 karakter
+üretilmiştir. Tümleşik Üretim Teknolojileri Merkezi Yönetmeliği'nin fiziksel 4.
+sayfası boş olduğu için tek boş sayfa olarak korunmuş fakat JSONL kaydı
+üretilmemiştir. İhale Yönetmeliği PDF'sindeki hatalı gömülü font eşlemelerinin
+Türkçe `i` yerine verdiği iki yabancı Unicode glifi kanıtlanmış dönüşümle
+onarılmış; sayfaların en az %80'inde aynı marj konumlarında yinelenen header,
+footer ve fiziksel sayfa sayaçları çıkarımdan temizlenmiştir. OCR kullanılmamıştır.
 
 ## Yapı-farkındalıklı chunking
 
@@ -185,8 +194,8 @@ bırakılır.
   tarafından ignore edilir.
 - Bir belgenin kamuya açık olması, yeniden dağıtım izni verildiği anlamına
   gelmez. Kullanıcılar kaynakların kullanım koşullarını ayrıca değerlendirmelidir.
-- Harici kaynaklar zaman içinde değişebilir veya kaldırılabilir. İlerideki
-  downloader, SHA-256 değişikliklerini sessizce üzerine yazmak yerine raporlayacaktır.
+- Harici kaynaklar zaman içinde değişebilir veya kaldırılabilir. Downloader
+  çalıştırmaları SHA-256 değişikliklerini sessizce üzerine yazmak yerine raporlar.
 - Bu proje hukuki veya akademik danışmanlık sistemi değildir.
 - PDF çıkarımı için değerlendirilen PyMuPDF, AGPL-3.0 veya ticari lisans altında
   sunulur. Bağımlılık eklenmeden önce lisans uyumluluğu ayrıca değerlendirilmelidir.

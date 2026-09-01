@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, dataclass
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -20,6 +21,12 @@ from turkish_local_rag.download import SourceDocument, load_manifest, sha256_fil
 
 
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+PAGE_COUNTER_PATTERN = re.compile(r"^(\d+)\s*/\s*(\d+)$")
+
+# Some embedded fonts in the trusted Turkish corpus expose an incorrect
+# ToUnicode map. These two non-Turkish code points consistently represent a
+# lowercase Latin "i" in the rendered source PDF.
+PDF_GLYPH_REPAIRS = str.maketrans({"\u0d74": "i", "\u0d88": "i"})
 
 
 class ExtractionError(RuntimeError):
@@ -65,6 +72,20 @@ def extract_document(
             text_blocks = 0
             characters = 0
 
+            extracted_page_blocks: list[tuple[int, float, list[dict[str, Any]]]] = []
+            for page_index in range(total_pdf_pages):
+                page = document.load_page(page_index)
+                extracted_page_blocks.append(
+                    (
+                        page_index + 1,
+                        float(page.rect.height),
+                        _extract_text_blocks(
+                            source.id, page_index + 1, page, settings.sort_blocks
+                        ),
+                    )
+                )
+            _remove_repeated_marginal_content(extracted_page_blocks, total_pdf_pages)
+
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 encoding="utf-8",
@@ -75,11 +96,7 @@ def extract_document(
                 delete=False,
             ) as temporary_file:
                 temporary_path = Path(temporary_file.name)
-                for page_index in range(total_pdf_pages):
-                    page = document.load_page(page_index)
-                    blocks = _extract_text_blocks(
-                        source.id, page_index + 1, page, settings.sort_blocks
-                    )
+                for page_number, _page_height, blocks in extracted_page_blocks:
                     page_text = "\n\n".join(block["text"] for block in blocks)
                     if not page_text and not settings.include_empty_pages:
                         continue
@@ -87,7 +104,7 @@ def extract_document(
                         "schema_version": 1,
                         "document_id": source.id,
                         "title": source.title,
-                        "page_number": page_index + 1,
+                        "page_number": page_number,
                         "source_page_url": source.source_page_url,
                         "pdf_url": source.pdf_url,
                         "pdf_sha256": pdf_sha256,
@@ -186,7 +203,7 @@ def _extract_text_blocks(
         block_type = int(raw_block[6]) if len(raw_block) > 6 else 0
         if block_type != 0:
             continue
-        text = str(raw_block[4]).strip()
+        text = _repair_pdf_glyphs(str(raw_block[4])).strip()
         if not text:
             continue
         block_index = len(extracted)
@@ -198,6 +215,61 @@ def _extract_text_blocks(
             }
         )
     return extracted
+
+
+def _repair_pdf_glyphs(text: str) -> str:
+    """Repair evidenced non-Turkish glyph mappings in trusted Turkish PDFs."""
+
+    return text.translate(PDF_GLYPH_REPAIRS)
+
+
+def _remove_repeated_marginal_content(
+    pages: list[tuple[int, float, list[dict[str, Any]]]], total_pages: int
+) -> None:
+    """Remove repeated header/footer lines and physical page counters in place."""
+
+    if total_pages < 3:
+        return
+    line_pages: dict[str, set[int]] = {}
+    for page_number, page_height, blocks in pages:
+        for block in blocks:
+            if not _is_marginal(block["bbox"], page_height):
+                continue
+            for line in block["text"].splitlines():
+                stripped = line.strip()
+                if stripped:
+                    line_pages.setdefault(stripped, set()).add(page_number)
+
+    minimum_pages = max(3, math.ceil(total_pages * 0.8))
+    repeated_lines = {
+        line for line, page_numbers in line_pages.items() if len(page_numbers) >= minimum_pages
+    }
+
+    for page_number, page_height, blocks in pages:
+        cleaned_blocks: list[dict[str, Any]] = []
+        for block in blocks:
+            if _is_marginal(block["bbox"], page_height):
+                kept_lines = []
+                for line in block["text"].splitlines():
+                    stripped = line.strip()
+                    counter_match = PAGE_COUNTER_PATTERN.fullmatch(stripped)
+                    is_physical_page_counter = bool(
+                        counter_match
+                        and int(counter_match.group(1)) == page_number
+                        and int(counter_match.group(2)) == total_pages
+                    )
+                    if stripped not in repeated_lines and not is_physical_page_counter:
+                        kept_lines.append(line)
+                block["text"] = "\n".join(kept_lines).strip()
+            if block["text"]:
+                cleaned_blocks.append(block)
+        for block_index, block in enumerate(cleaned_blocks):
+            block["block_id"] = f"{block['block_id'].rsplit(':b', 1)[0]}:b{block_index}"
+        blocks[:] = cleaned_blocks
+
+
+def _is_marginal(bbox: list[float], page_height: float) -> bool:
+    return bbox[1] <= page_height * 0.12 or bbox[3] >= page_height * 0.88
 
 
 def _verify_download(
