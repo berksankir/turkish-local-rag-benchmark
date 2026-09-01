@@ -1,5 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "dataset": {
+    "kind": "provisional_ai_candidates",
+    "human_reviewed": false,
+    "final_gold": false,
+    "description": "AI-generated candidate set with automatic answerable span/page integrity checks; automatic validation is not human approval.",
+    "correction_note": "The original run incorrectly labeled this dataset as approved gold. Metric values are preserved unchanged."
+  },
   "protocol": {
     "pipelines": [
       "dense",
@@ -25,6 +32,7 @@
     "reranker_model_revision": "1427fd652930e4ba29e8149678df786c240d8825",
     "reranker_model_sha256": "5daeca2481a76b5976a2bdc32f0a78532b6716da4f8cd3ff59460ef8d2f359b4",
     "config_sha256": "3113144aafff74dd31b845735ac1fe7294a8692a90155f7b6c82cbe2791c55c0",
+    "config_snapshot_note": "Historical configuration snapshot; evaluation_gold is the path name used by the original run and does not imply human review.",
     "config": {
       "schema_version": 1,
       "paths": {
@@ -97,8 +105,8 @@
       }
     },
     "manifest_sha256": "156e6225f625604f43d179076b112bd7c8be715e0dcd71b64645c30fdc079317",
-    "approved_candidates_sha256": "ae347bcd6b2f8a6b9f2071aaf738818c90e2ae22df76d39675fad1008b58a207",
-    "gold_sha256": "0599ae0c761db73e7512f4cd4eef0a2ced2d258319f127076a0949096c9aa268",
+    "candidate_set_sha256": "ae347bcd6b2f8a6b9f2071aaf738818c90e2ae22df76d39675fad1008b58a207",
+    "evaluation_set_sha256": "0599ae0c761db73e7512f4cd4eef0a2ced2d258319f127076a0949096c9aa268",
     "chunk_file_sha256": {
       "sabanci-ana-yonetmeligi": "366c553048e27179e2762ca014ba2e972e95808f5df949ec631b3a56f96c6b9a",
       "temel-gelistirme-yili-egitim-ogretim-yonetmeligi": "8dd27945e772e81fc9dbe2f2cf88f91ea083b09e4d8d964f58bd5d4417c11212",

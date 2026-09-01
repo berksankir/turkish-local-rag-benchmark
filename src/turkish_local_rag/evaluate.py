@@ -57,7 +57,7 @@ class EvaluationError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
-class GoldRecord:
+class EvaluationRecord:
     candidate: Candidate
     split: str
 
@@ -67,7 +67,7 @@ def load_gold(
     approved_candidates: Sequence[Candidate],
     *,
     expected_split_counts: Mapping[str, Mapping[str, int]] = EXPECTED_SPLIT_COUNTS,
-) -> tuple[GoldRecord, ...]:
+) -> tuple[EvaluationRecord, ...]:
     """Load gold JSONL and prove every record equals its approved candidate."""
 
     return _load_evaluation_set(
@@ -85,7 +85,7 @@ def load_silver(
     candidates: Sequence[Candidate],
     *,
     expected_split_counts: Mapping[str, Mapping[str, int]] = EXPECTED_SPLIT_COUNTS,
-) -> tuple[GoldRecord, ...]:
+) -> tuple[EvaluationRecord, ...]:
     """Load silver JSONL and prove it is an unchanged candidate-set projection."""
 
     return _load_evaluation_set(
@@ -106,7 +106,7 @@ def _load_evaluation_set(
     dataset_kind: str,
     expected_candidate_label: str,
     changed_message: str,
-) -> tuple[GoldRecord, ...]:
+) -> tuple[EvaluationRecord, ...]:
     dataset_path = Path(path)
     try:
         lines = dataset_path.read_text(encoding="utf-8").splitlines()
@@ -117,7 +117,7 @@ def _load_evaluation_set(
     expected_by_id = {
         candidate.candidate_id: candidate for candidate in expected_candidates
     }
-    records: list[GoldRecord] = []
+    records: list[EvaluationRecord] = []
     seen_ids: set[str] = set()
     expected_keys = CANDIDATE_KEYS | {"split"}
     for line_number, line in enumerate(lines, start=1):
@@ -159,7 +159,7 @@ def _load_evaluation_set(
             raise EvaluationError(
                 f"{changed_message}: {candidate.candidate_id}"
             )
-        records.append(GoldRecord(candidate=candidate, split=split))
+        records.append(EvaluationRecord(candidate=candidate, split=split))
 
     if seen_ids != set(expected_by_id):
         missing = sorted(set(expected_by_id) - seen_ids)
@@ -173,7 +173,7 @@ def _load_evaluation_set(
 
 
 def _validate_split_counts(
-    records: Sequence[GoldRecord],
+    records: Sequence[EvaluationRecord],
     expected_split_counts: Mapping[str, Mapping[str, int]],
 ) -> None:
     for split, expected in expected_split_counts.items():
@@ -191,18 +191,18 @@ def _validate_split_counts(
 
 
 def score_retrieval(
-    gold: GoldRecord,
+    evaluation_record: EvaluationRecord,
     pipeline: str,
     hits: Sequence[Any],
     latency_ms: float,
 ) -> dict[str, Any]:
     """Score one ranking; relevance requires both trusted document and page."""
 
-    candidate = gold.candidate
+    candidate = evaluation_record.candidate
     serialized_hits = [_serialize_hit(hit) for hit in hits]
     result: dict[str, Any] = {
         "candidate_id": candidate.candidate_id,
-        "split": gold.split,
+        "split": evaluation_record.split,
         "pipeline": pipeline,
         "question": candidate.question,
         "answerable": candidate.answerable,
@@ -306,6 +306,7 @@ def run_benchmark(
         approved_candidates,
         approved_split_counts,
         load_review,
+        review_provenance_summary,
         review_status_counts,
         select_silver_audit_candidates,
         validate_review_grounding,
@@ -340,6 +341,7 @@ def run_benchmark(
             "kind": "gold",
             "human_reviewed": True,
             "description": "Only explicitly human-approved records.",
+            "review_provenance": review_provenance_summary(reviews),
             "review_statuses": review_status_counts(reviews),
         }
     else:
@@ -368,6 +370,7 @@ def run_benchmark(
                 "integrity checks; automatic validation is not human approval."
             ),
             "audit_sample_records": len(audit_reviews),
+            "audit_provenance": review_provenance_summary(audit_reviews),
             "audit_statuses": review_status_counts(audit_reviews),
         }
     chunks = load_chunk_corpus(paths.chunks_directory, sources)
@@ -604,7 +607,7 @@ def _mean_metric(results: Sequence[Mapping[str, Any]], key: str) -> float:
     return sum(float(result["metrics"][key]) for result in results) / len(results)
 
 
-def _split_policy(records: Sequence[GoldRecord]) -> str:
+def _split_policy(records: Sequence[EvaluationRecord]) -> str:
     parts: list[str] = []
     for split in SPLITS:
         selected = [record for record in records if record.split == split]

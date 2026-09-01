@@ -248,11 +248,13 @@ olmaz. Audit bir sorun bulursa silver provisional kalır ve ilgili aday ayrıca
 düzeltilmelidir.
 
 Tam gold incelemesi için `evaluation/review.csv` içindeki 50 kayıt korunur ve
-başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status` ve
-`review_notes` alanları düzenlenmelidir; candidate alanları ve `proposed_split`
-değiştirilirse doğrulayıcı kaydı reddeder. Geçerli durumlar `pending`, `approved`,
-`needs_changes` ve `rejected` değerleridir. Kaynak span'deki satır sonları CSV'de
-okunabilirlik için `\n` olarak gösterilir.
+başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status`,
+`review_notes`, `reviewer` ve `reviewed_at_utc` alanları düzenlenmelidir; candidate
+alanları ve `proposed_split` değiştirilirse doğrulayıcı kaydı reddeder. Geçerli
+durumlar `pending`, `approved`, `needs_changes` ve `rejected` değerleridir.
+`pending` dışındaki her karar reviewer ve `Z` ile biten ISO-8601 UTC zamanı
+gerektirir; `needs_changes` ve `rejected` kararlarında review notes zorunludur.
+Kaynak span'deki satır sonları CSV'de okunabilirlik için `\n` olarak gösterilir.
 
 Review dosyasını ve otomatik span bütünlüğünü kontrol etmek için:
 
@@ -294,7 +296,8 @@ Silver çıktıları `evaluation/results/silver/`, gold çıktıları
 `evaluation/results/gold/` altında üretilir. Silver JSON/CSV/Markdown çıktıları
 dataset türünü ve audit durumlarını taşır; otomatik doğrulama insan onayı gibi
 sunulmaz.
-AI adaylarıyla yapılan eski teknik koşunun değiştirilmemiş çıktıları
+AI adaylarıyla yapılan eski teknik koşunun metrikleri korunmuş, metodolojik
+etiketleri düzeltilmiş çıktıları
 `evaluation/provisional/2026-09-01-ai-candidates/` altındadır. Bunlar pipeline'ın
 çalıştığını gösterir; nihai benchmark sonucu olarak kullanılamaz.
 

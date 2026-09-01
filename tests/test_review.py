@@ -15,6 +15,7 @@ from turkish_local_rag.review import (
     build_gold_records,
     build_silver_records,
     load_review,
+    review_provenance_summary,
     select_silver_audit_candidates,
     validate_review_grounding,
     write_gold,
@@ -86,13 +87,30 @@ def test_review_is_created_all_pending_and_round_trips_candidates(
 
 
 def test_pending_needs_changes_and_rejected_never_enter_gold(tmp_path: Path) -> None:
-    approved = ReviewRecord(_candidate("candidate-001"), "dev", "approved", "ok")
+    approved = ReviewRecord(
+        _candidate("candidate-001"),
+        "dev",
+        "approved",
+        "ok",
+        "berk-sankir",
+        "2026-09-02T12:00:00Z",
+    )
     pending = ReviewRecord(_candidate("candidate-002"), "test", "pending", "")
     needs_changes = ReviewRecord(
-        _candidate("candidate-003"), "test", "needs_changes", "revise"
+        _candidate("candidate-003"),
+        "test",
+        "needs_changes",
+        "revise",
+        "berk-sankir",
+        "2026-09-02T12:01:00Z",
     )
     rejected = ReviewRecord(
-        _candidate("candidate-004"), "test", "rejected", "unsupported"
+        _candidate("candidate-004"),
+        "test",
+        "rejected",
+        "unsupported",
+        "berk-sankir",
+        "2026-09-02T12:02:00Z",
     )
 
     payloads = build_gold_records([approved, pending, needs_changes, rejected])
@@ -121,6 +139,59 @@ def test_invalid_review_status_is_rejected(tmp_path: Path) -> None:
     _rewrite_cell(path, candidate.candidate_id, "review_status", "auto_approved")
 
     with pytest.raises(ReviewError, match="invalid review_status"):
+        load_review(path, [candidate])
+
+
+def test_completed_review_requires_reviewer_and_utc_timestamp(tmp_path: Path) -> None:
+    candidate = _candidate("candidate-001")
+    path = tmp_path / "review.csv"
+    write_pending_review([candidate], path)
+    _rewrite_cell(path, candidate.candidate_id, "review_status", "approved")
+
+    with pytest.raises(ReviewError, match="requires reviewer"):
+        load_review(path, [candidate])
+
+    _rewrite_cell(path, candidate.candidate_id, "reviewer", "berk-sankir")
+    _rewrite_cell(
+        path,
+        candidate.candidate_id,
+        "reviewed_at_utc",
+        "2026-09-02T12:00:00+03:00",
+    )
+    with pytest.raises(ReviewError, match="ending in Z"):
+        load_review(path, [candidate])
+
+    _rewrite_cell(
+        path,
+        candidate.candidate_id,
+        "reviewed_at_utc",
+        "2026-09-02T09:00:00Z",
+    )
+    records = load_review(path, [candidate])
+
+    assert records[0].reviewer == "berk-sankir"
+    assert records[0].reviewed_at_utc == "2026-09-02T09:00:00Z"
+    assert review_provenance_summary(records) == {
+        "decisions_with_provenance": 1,
+        "reviewers": ["berk-sankir"],
+        "latest_reviewed_at_utc": "2026-09-02T09:00:00Z",
+    }
+
+
+def test_rejected_review_requires_notes(tmp_path: Path) -> None:
+    candidate = _candidate("candidate-001")
+    path = tmp_path / "review.csv"
+    write_pending_review([candidate], path)
+    _rewrite_cell(path, candidate.candidate_id, "review_status", "rejected")
+    _rewrite_cell(path, candidate.candidate_id, "reviewer", "berk-sankir")
+    _rewrite_cell(
+        path,
+        candidate.candidate_id,
+        "reviewed_at_utc",
+        "2026-09-02T09:00:00Z",
+    )
+
+    with pytest.raises(ReviewError, match="requires review_notes"):
         load_review(path, [candidate])
 
 

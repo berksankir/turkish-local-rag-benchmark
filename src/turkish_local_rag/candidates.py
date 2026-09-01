@@ -167,7 +167,7 @@ def validate_candidate_set(
 
 
 def parse_candidate_record(raw: Any, line_number: int) -> Candidate:
-    """Parse one strict candidate object for candidate and gold JSONL loaders."""
+    """Parse one strict candidate object for candidate, silver, and gold loaders."""
 
     section = f"line {line_number}"
     record = _mapping(raw, section)

@@ -6,6 +6,7 @@ import argparse
 from collections import Counter
 import csv
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 import io
 import json
 import os
@@ -41,6 +42,8 @@ REVIEW_FIELDS = (
     "proposed_split",
     "review_status",
     "review_notes",
+    "reviewer",
+    "reviewed_at_utc",
 )
 
 # This split proposal was fixed before the provisional retrieval run and is not
@@ -73,6 +76,8 @@ class ReviewRecord:
     proposed_split: str
     review_status: str
     review_notes: str
+    reviewer: str = ""
+    reviewed_at_utc: str = ""
 
 
 def write_pending_review(
@@ -129,6 +134,16 @@ def load_review(
                     f"invalid proposed_split at line {line_number}: {proposed_split!r}"
                 )
             candidate = _candidate_from_review_row(row, line_number)
+            review_notes = row["review_notes"]
+            reviewer = row["reviewer"].strip()
+            reviewed_at_utc = row["reviewed_at_utc"].strip()
+            _validate_review_decision(
+                status,
+                review_notes,
+                reviewer,
+                reviewed_at_utc,
+                context=f"line {line_number}",
+            )
             if candidate.candidate_id in seen_ids:
                 raise ReviewError(
                     f"duplicate candidate_id in review: {candidate.candidate_id}"
@@ -153,7 +168,9 @@ def load_review(
                     candidate=candidate,
                     proposed_split=proposed_split,
                     review_status=status,
-                    review_notes=row["review_notes"],
+                    review_notes=review_notes,
+                    reviewer=reviewer,
+                    reviewed_at_utc=reviewed_at_utc,
                 )
             )
     if seen_ids != set(candidate_by_id):
@@ -305,6 +322,13 @@ def build_gold_records(records: Sequence[ReviewRecord]) -> tuple[dict[str, Any],
     for record in records:
         if record.review_status != "approved":
             continue
+        _validate_review_decision(
+            record.review_status,
+            record.review_notes,
+            record.reviewer,
+            record.reviewed_at_utc,
+            context=record.candidate.candidate_id,
+        )
         payloads.append(_candidate_payload(record.candidate, record.proposed_split))
     return tuple(payloads)
 
@@ -332,6 +356,52 @@ def write_gold(
 def review_status_counts(records: Sequence[ReviewRecord]) -> dict[str, int]:
     counts = Counter(record.review_status for record in records)
     return {status: counts.get(status, 0) for status in sorted(VALID_REVIEW_STATUSES)}
+
+
+def review_provenance_summary(records: Sequence[ReviewRecord]) -> dict[str, Any]:
+    """Summarize explicit human provenance without inferring approval."""
+
+    decided = [record for record in records if record.review_status != "pending"]
+    timestamps = sorted(record.reviewed_at_utc for record in decided)
+    return {
+        "decisions_with_provenance": len(decided),
+        "reviewers": sorted({record.reviewer for record in decided}),
+        "latest_reviewed_at_utc": timestamps[-1] if timestamps else None,
+    }
+
+
+def _validate_review_decision(
+    status: str,
+    review_notes: str,
+    reviewer: str,
+    reviewed_at_utc: str,
+    *,
+    context: str,
+) -> None:
+    if status == "pending":
+        if reviewer or reviewed_at_utc:
+            raise ReviewError(
+                f"pending review cannot carry reviewer provenance at {context}"
+            )
+        return
+    if not reviewer:
+        raise ReviewError(f"{status} review requires reviewer at {context}")
+    if not reviewed_at_utc:
+        raise ReviewError(f"{status} review requires reviewed_at_utc at {context}")
+    if not reviewed_at_utc.endswith("Z"):
+        raise ReviewError(
+            f"reviewed_at_utc must be an ISO-8601 UTC timestamp ending in Z at {context}"
+        )
+    try:
+        parsed = datetime.fromisoformat(reviewed_at_utc[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ReviewError(
+            f"invalid reviewed_at_utc timestamp at {context}: {reviewed_at_utc!r}"
+        ) from exc
+    if parsed.utcoffset() != timedelta(0):
+        raise ReviewError(f"reviewed_at_utc must use UTC at {context}")
+    if status in {"needs_changes", "rejected"} and not review_notes.strip():
+        raise ReviewError(f"{status} review requires review_notes at {context}")
 
 
 def _candidate_payload(candidate: Candidate, split: str) -> dict[str, Any]:
@@ -363,6 +433,8 @@ def _candidate_to_review_row(candidate: Candidate) -> dict[str, str]:
         "proposed_split": _proposed_split(candidate.candidate_id),
         "review_status": "pending",
         "review_notes": "",
+        "reviewer": "",
+        "reviewed_at_utc": "",
     }
 
 
@@ -566,6 +638,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json.dumps(
                     {
                         "records": len(audit_reviews),
+                        "provenance": review_provenance_summary(audit_reviews),
                         "statuses": review_status_counts(audit_reviews),
                         "verified_source_spans": (
                             audit_grounding.verified_source_spans
@@ -585,6 +658,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json.dumps(
                     {
                         "records": len(reviews),
+                        "provenance": review_provenance_summary(reviews),
                         "statuses": review_status_counts(reviews),
                         "verified_source_spans": grounding.verified_source_spans,
                     },

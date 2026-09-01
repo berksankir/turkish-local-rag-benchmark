@@ -8,7 +8,7 @@ import pytest
 from turkish_local_rag.candidates import Candidate
 from turkish_local_rag.evaluate import (
     EvaluationError,
-    GoldRecord,
+    EvaluationRecord,
     aggregate_results,
     load_gold,
     load_silver,
@@ -120,10 +120,10 @@ def test_silver_loader_rejects_candidate_drift(tmp_path: Path) -> None:
 
 
 def test_retrieval_scoring_requires_matching_document_and_page() -> None:
-    gold = GoldRecord(_candidate("candidate-001", answerable=True), "dev")
+    record = EvaluationRecord(_candidate("candidate-001", answerable=True), "dev")
     hits = [_hit("doc", 2, 1), _hit("other", 3, 2), _hit("doc", 3, 3)]
 
-    result = score_retrieval(gold, "dense", hits, 12.5)
+    result = score_retrieval(record, "dense", hits, 12.5)
 
     assert result["metrics"] == {
         "recall_at_1": False,
@@ -138,9 +138,9 @@ def test_retrieval_scoring_requires_matching_document_and_page() -> None:
 
 
 def test_unanswerable_is_excluded_from_quality_metrics() -> None:
-    gold = GoldRecord(_candidate("candidate-002", answerable=False), "test")
+    record = EvaluationRecord(_candidate("candidate-002", answerable=False), "test")
 
-    result = score_retrieval(gold, "bm25", [_hit("doc", 3, 1)], 1.0)
+    result = score_retrieval(record, "bm25", [_hit("doc", 3, 1)], 1.0)
 
     assert result["metrics"] is None
 
@@ -149,8 +149,10 @@ def test_aggregate_reports_each_pipeline_and_split() -> None:
     records: list[dict[str, object]] = []
     for split in ("dev", "test"):
         for pipeline in ("dense", "bm25", "hybrid_rrf", "hybrid_reranked"):
-            gold = GoldRecord(_candidate("candidate-001", answerable=True), split)
-            records.append(score_retrieval(gold, pipeline, [_hit("doc", 3, 1)], 2.0))
+            record = EvaluationRecord(_candidate("candidate-001", answerable=True), split)
+            records.append(
+                score_retrieval(record, pipeline, [_hit("doc", 3, 1)], 2.0)
+            )
 
     summary = aggregate_results(records)
 
@@ -208,8 +210,8 @@ def test_silver_report_is_explicitly_not_human_approved() -> None:
 
 def test_split_policy_is_derived_from_selected_records() -> None:
     records = [
-        GoldRecord(_candidate("candidate-001", answerable=True), "dev"),
-        GoldRecord(_candidate("candidate-002", answerable=False), "test"),
+        EvaluationRecord(_candidate("candidate-001", answerable=True), "dev"),
+        EvaluationRecord(_candidate("candidate-002", answerable=False), "test"),
     ]
 
     assert _split_policy(records) == (
