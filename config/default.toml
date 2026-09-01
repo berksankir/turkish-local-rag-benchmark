@@ -1,0 +1,66 @@
+schema_version = 1
+
+[paths]
+project_root = ".."
+source_manifest = "data/manifest.json"
+pdf_directory = "data/pdfs"
+metadata_directory = "data/downloads"
+extracted_pages_directory = "artifacts/extracted"
+chunks_directory = "artifacts/chunks"
+embedding_model_directory = "models/multilingual-e5-small"
+reranker_model_directory = "models/mmarco-mMiniLMv2-L12-H384-v1"
+qdrant_directory = "indexes/qdrant"
+
+[downloader]
+timeout_seconds = 30
+chunk_size_bytes = 65536
+maximum_pdf_bytes = 52428800
+user_agent = "turkish-local-rag-benchmark/0.1"
+
+[extraction]
+sort_blocks = true
+include_empty_pages = false
+
+[chunking]
+target_model_tokens = 384
+maximum_model_tokens = 448
+overlap_model_tokens = 48
+estimated_characters_per_token = 3
+respect_page_boundaries = true
+preserve_article_boundaries = true
+
+[retrieval.rrf]
+rank_constant = 60
+dense_candidates = 50
+sparse_candidates = 50
+fused_candidates = 20
+
+[retrieval.bm25]
+k1 = 1.5
+b = 0.75
+epsilon = 0.25
+minimum_score = 0.0
+top_k = 20
+
+[retrieval.dense]
+model_id = "intfloat/multilingual-e5-small"
+model_revision = "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+model_sha256 = "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477"
+vector_size = 384
+max_sequence_length = 512
+batch_size = 8
+query_prefix = "query: "
+passage_prefix = "passage: "
+normalize_embeddings = true
+collection_name = "chunks_e5_small_v1"
+minimum_score = 0.0
+
+[retrieval.reranker]
+model_id = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+model_revision = "1427fd652930e4ba29e8149678df786c240d8825"
+model_sha256 = "5daeca2481a76b5976a2bdc32f0a78532b6716da4f8cd3ff59460ef8d2f359b4"
+max_sequence_length = 512
+batch_size = 4
+candidate_count = 20
+top_k = 10
+zero_shot_turkish = true

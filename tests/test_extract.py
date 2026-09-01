@@ -1,0 +1,142 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import pymupdf
+import pytest
+
+from turkish_local_rag.config import ExtractionConfig, ResolvedPaths
+from turkish_local_rag.download import SourceDocument
+from turkish_local_rag.extract import ExtractionError, extract_document
+
+
+SOURCE = SourceDocument(
+    id="test-document",
+    title="Test Yönetmeliği",
+    source_page_url="https://example.test/sources",
+    pdf_url="https://example.test/document.pdf",
+)
+SETTINGS = ExtractionConfig(sort_blocks=True, include_empty_pages=False)
+
+
+def _paths(tmp_path: Path) -> ResolvedPaths:
+    return ResolvedPaths(
+        project_root=tmp_path,
+        source_manifest=tmp_path / "manifest.json",
+        pdf_directory=tmp_path / "pdfs",
+        metadata_directory=tmp_path / "metadata",
+        extracted_pages_directory=tmp_path / "extracted",
+        chunks_directory=tmp_path / "chunks",
+        embedding_model_directory=tmp_path / "model",
+        reranker_model_directory=tmp_path / "reranker",
+        qdrant_directory=tmp_path / "qdrant",
+    )
+
+
+def _make_pdf(path: Path, pages: list[list[tuple[float, str]]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    document = pymupdf.open()
+    try:
+        for text_blocks in pages:
+            page = document.new_page()
+            for y_position, text in text_blocks:
+                page.insert_text((72, y_position), text)
+        document.save(path)
+    finally:
+        document.close()
+
+
+def _write_metadata(paths: ResolvedPaths) -> str:
+    pdf_path = paths.pdf_directory / "test-document.pdf"
+    digest = hashlib.sha256(pdf_path.read_bytes()).hexdigest()
+    paths.metadata_directory.mkdir(parents=True, exist_ok=True)
+    metadata = {
+        "id": SOURCE.id,
+        "title": SOURCE.title,
+        "source_page_url": SOURCE.source_page_url,
+        "pdf_url": SOURCE.pdf_url,
+        "final_url": SOURCE.pdf_url,
+        "downloaded_at_utc": "2026-09-01T12:30:00Z",
+        "size_bytes": pdf_path.stat().st_size,
+        "sha256": digest,
+        "content_type": "application/pdf",
+        "local_filename": pdf_path.name,
+    }
+    (paths.metadata_directory / "test-document.json").write_text(
+        json.dumps(metadata), encoding="utf-8"
+    )
+    return digest
+
+
+def test_extraction_preserves_pages_order_and_trusted_metadata(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    pdf_path = paths.pdf_directory / "test-document.pdf"
+    _make_pdf(
+        pdf_path,
+        [
+            [(200, "Ikinci blok"), (72, "MADDE 1 - Birinci blok")],
+            [(72, "MADDE 2 - Ikinci sayfa")],
+        ],
+    )
+    expected_hash = _write_metadata(paths)
+
+    result = extract_document(SOURCE, paths, SETTINGS)
+
+    records = [
+        json.loads(line)
+        for line in result.output_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert result.total_pdf_pages == 2
+    assert result.extracted_pages == 2
+    assert [record["page_number"] for record in records] == [1, 2]
+    assert records[0]["text"].index("Birinci") < records[0]["text"].index("Ikinci")
+    assert "Ikinci sayfa" not in records[0]["text"]
+    assert records[0]["title"] == SOURCE.title
+    assert records[0]["source_page_url"] == SOURCE.source_page_url
+    assert records[0]["pdf_sha256"] == expected_hash
+    assert records[0]["blocks"][0]["block_id"] == "test-document:p1:b0"
+    assert not list(paths.extracted_pages_directory.glob("*.tmp"))
+
+
+def test_empty_pages_are_skipped_without_changing_page_numbers(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    pdf_path = paths.pdf_directory / "test-document.pdf"
+    _make_pdf(pdf_path, [[], [(72, "Second physical page")]])
+    _write_metadata(paths)
+
+    result = extract_document(SOURCE, paths, SETTINGS)
+    records = [
+        json.loads(line)
+        for line in result.output_path.read_text(encoding="utf-8").splitlines()
+    ]
+
+    assert result.total_pdf_pages == 2
+    assert result.extracted_pages == 1
+    assert records[0]["page_number"] == 2
+
+
+def test_hash_mismatch_blocks_extraction(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    pdf_path = paths.pdf_directory / "test-document.pdf"
+    _make_pdf(pdf_path, [[(72, "Original")]])
+    _write_metadata(paths)
+    changed = bytearray(pdf_path.read_bytes())
+    changed[-1] ^= 1
+    pdf_path.write_bytes(changed)
+
+    with pytest.raises(ExtractionError, match="PDF hash differs"):
+        extract_document(SOURCE, paths, SETTINGS)
+
+    assert not paths.extracted_pages_directory.exists()
+
+
+def test_missing_download_metadata_blocks_extraction(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    _make_pdf(paths.pdf_directory / "test-document.pdf", [[(72, "Content")]])
+
+    with pytest.raises(ExtractionError, match="download metadata not found"):
+        extract_document(SOURCE, paths, SETTINGS)
+
+    assert not paths.extracted_pages_directory.exists()

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turkish-local-rag-benchmark"
+version = "0.1.0"
+description = "Reproducible, fully local RAG benchmark for Turkish PDF documents"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "huggingface-hub==1.29.0",
+    "numpy==2.5.2",
+    "PyMuPDF==1.28.2",
+    "qdrant-client==1.19.0",
+    "rank-bm25==0.2.2",
+    "sentence-transformers==6.0.1",
+    "torch==2.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["src"]

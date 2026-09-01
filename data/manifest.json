@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "id": "sabanci-ana-yonetmeligi",
+      "title": "Sabancı Üniversitesi Ana Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2026-06/sabanci-universitesi-ana-yonetmeligi_15.06.2026-rg.pdf"
+    },
+    {
+      "id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
+      "title": "Temel Geliştirme Yılı Eğitim ve Öğretim Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/tgy_-tr_v23.pdf"
+    },
+    {
+      "id": "lisans-egitim-ogretim-yonetmeligi",
+      "title": "Lisans Eğitim ve Öğretim Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/lisans_yon_tr_v26.pdf"
+    },
+    {
+      "id": "lisansustu-egitim-ogretim-yonetmeligi",
+      "title": "Lisansüstü Eğitim ve Öğretim Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/lisansustu-yon_tr_v22.pdf"
+    },
+    {
+      "id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
+      "title": "Nanotanı İçin Fonksiyonel Yüzey ve Arayüzeyler Uygulama ve Araştırma Merkezi Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/nanotani-fonksiyonel-yuzey.pdf"
+    },
+    {
+      "id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
+      "title": "Toplumsal Cinsiyet ve Kadın Çalışmaları Uygulama ve Araştırma Merkezi Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/toplumsal_cinsiyet.pdf"
+    },
+    {
+      "id": "veri-analitigi-merkezi-yonetmeligi",
+      "title": "Veri Analitiği Uygulama ve Araştırma Merkezi Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/veri-analitigi-uygulama.pdf"
+    },
+    {
+      "id": "tumlesik-uretim-teknolojileri-merkezi-yonetmeligi",
+      "title": "Tümleştirilmiş Üretim Teknolojileri Uygulama ve Araştırma Merkezi Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/tumer.pdf"
+    },
+    {
+      "id": "sabanci-ihale-yonetmeligi",
+      "title": "Sabancı Üniversitesi İhale Yönetmeliği",
+      "source_page_url": "https://www.sabanciuniv.edu/tr/hakkimizda/universitemiz/yonetmelikler",
+      "pdf_url": "https://www.sabanciuniv.edu/sites/default/files/2023-10/sabanci_universitesi_ihale_yonetmeligi_21_subat_2021.pdf"
+    }
+  ]
+}
