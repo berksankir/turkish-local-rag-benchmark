@@ -152,3 +152,81 @@ def test_untrusted_page_metadata_is_rejected(tmp_path: Path) -> None:
         chunk_document(SOURCE, paths, _settings())
 
     assert not paths.chunks_directory.exists()
+
+
+def test_article_heading_is_attached_to_following_article(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    _write_pages(
+        paths,
+        [
+            _page(
+                1,
+                [
+                    "Amaç\nMADDE 1 - İlk hüküm.\n"
+                    "Tanımlar\nMADDE 2 - İkinci hüküm."
+                ],
+            )
+        ],
+    )
+
+    result = chunk_document(SOURCE, paths, _settings(target=100, maximum=120))
+    chunks = _read_chunks(result.output_path)
+
+    assert len(chunks) == 2
+    assert chunks[0]["text"] == "Amaç\nMADDE 1 - İlk hüküm."
+    assert chunks[1]["text"] == "Tanımlar\nMADDE 2 - İkinci hüküm."
+
+
+def test_cross_block_section_heading_is_attached_and_page_footer_is_removed(
+    tmp_path: Path,
+) -> None:
+    paths = _paths(tmp_path)
+    _write_pages(
+        paths,
+        [
+            _page(
+                1,
+                [
+                    "İKİNCİ BÖLÜM\nEğitim Esasları\nAkademik yıl",
+                    "MADDE 5 - Akademik yıl iki dönemdir.",
+                    "Test Yönetmeliği   Sayfa 1 / 2",
+                ],
+            )
+        ],
+    )
+
+    result = chunk_document(SOURCE, paths, _settings(target=100, maximum=120))
+    chunks = _read_chunks(result.output_path)
+
+    assert len(chunks) == 1
+    assert chunks[0]["text"] == (
+        "İKİNCİ BÖLÜM\nEğitim Esasları\nAkademik yıl\n"
+        "MADDE 5 - Akademik yıl iki dönemdir."
+    )
+    assert chunks[0]["source_block_ids"] == [
+        "test-document:p1:b0",
+        "test-document:p1:b1",
+    ]
+
+
+def test_publication_masthead_only_chunk_is_removed(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    _write_pages(
+        paths,
+        [
+            _page(
+                1,
+                [
+                    "21 Ağustos 2023\nResmî Gazete No: 32286\nYÖNETMELİK",
+                    "Amaç\nMADDE 1 - Yönetmeliğin amacı açıklanır.",
+                ],
+            )
+        ],
+    )
+
+    result = chunk_document(SOURCE, paths, _settings(target=100, maximum=120))
+    chunks = _read_chunks(result.output_path)
+
+    assert len(chunks) == 1
+    assert chunks[0]["text"] == "Amaç\nMADDE 1 - Yönetmeliğin amacı açıklanır."
+    assert chunks[0]["chunk_id"] == "test-document:p1:c0"

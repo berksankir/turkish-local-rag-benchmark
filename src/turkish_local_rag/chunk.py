@@ -22,6 +22,9 @@ SECTION_PATTERN = re.compile(r"^[A-ZÇĞİÖŞÜ]+\s+BÖLÜM\b", re.IGNORECASE)
 PARAGRAPH_PATTERN = re.compile(r"^(?:\(\d+\)|[a-zçğıöşü]\))\s+", re.IGNORECASE)
 SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])\s+")
 LEXEME_PATTERN = re.compile(r"\w+|[^\w\s]", re.UNICODE)
+PAGE_COUNTER_LINE_PATTERN = re.compile(
+    r"^(?:\d+\s*/\s*\d+|.*\bSayfa\s+\d+\s*/\s*\d+)\s*$", re.IGNORECASE
+)
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 TOKEN_COUNT_METHOD = "max(unicode_lexemes,ceil(characters/configured_chars_per_token))"
 
@@ -85,7 +88,11 @@ def chunk_document(
                 units = _structural_units(
                     page["blocks"], settings.preserve_article_boundaries
                 )
-                chunks = _pack_units(units, settings)
+                chunks = [
+                    chunk_units
+                    for chunk_units in _pack_units(units, settings)
+                    if not _is_publication_masthead_only(_join_units(chunk_units))
+                ]
                 for page_chunk_index, chunk_units in enumerate(chunks):
                     text = _join_units(chunk_units)
                     estimated_tokens = estimate_tokens(
@@ -294,7 +301,7 @@ def _structural_units(
             if current_lines:
                 units.append(
                     StructuralUnit(
-                        text=" ".join(current_lines),
+                        text="\n".join(current_lines),
                         block_ids=(block_id,),
                         force_boundary_before=current_force_boundary,
                     )
@@ -307,10 +314,21 @@ def _structural_units(
             if not line:
                 flush()
                 continue
+            if PAGE_COUNTER_LINE_PATTERN.fullmatch(line):
+                flush()
+                continue
             is_article = bool(ARTICLE_PATTERN.match(line))
+            if is_article:
+                article_heading: list[str] = []
+                while current_lines and _looks_like_article_heading(current_lines[-1]):
+                    article_heading.insert(0, current_lines.pop())
+                flush()
+                current_lines.extend(article_heading)
+                current_force_boundary = preserve_article_boundaries
+                current_lines.append(line)
+                continue
             starts_structure = (
-                is_article
-                or bool(SECTION_PATTERN.match(line))
+                bool(SECTION_PATTERN.match(line))
                 or bool(PARAGRAPH_PATTERN.match(line))
             )
             if starts_structure and current_lines:
@@ -319,7 +337,60 @@ def _structural_units(
                 current_force_boundary = is_article and preserve_article_boundaries
             current_lines.append(line)
         flush()
-    return units
+    merged: list[StructuralUnit] = []
+    for unit in units:
+        if unit.force_boundary_before:
+            headings: list[StructuralUnit] = []
+            while merged and _is_heading_unit(merged[-1]):
+                headings.insert(0, merged.pop())
+            if headings:
+                unit = replace(
+                    unit,
+                    text="\n".join([*(heading.text for heading in headings), unit.text]),
+                    block_ids=tuple(
+                        dict.fromkeys(
+                            block_id
+                            for item in [*headings, unit]
+                            for block_id in item.block_ids
+                        )
+                    ),
+                )
+        merged.append(unit)
+    return merged
+
+
+def _looks_like_article_heading(line: str) -> bool:
+    """Identify a short regulation heading immediately preceding a MADDE line."""
+
+    stripped = line.strip()
+    return bool(
+        stripped
+        and len(stripped) <= 100
+        and len(stripped.split()) <= 12
+        and not ARTICLE_PATTERN.match(stripped)
+        and not PARAGRAPH_PATTERN.match(stripped)
+        and stripped[-1] not in ".!?;:”“\""
+    )
+
+
+def _is_heading_unit(unit: StructuralUnit) -> bool:
+    lines = [line.strip() for line in unit.text.splitlines() if line.strip()]
+    return bool(
+        lines
+        and not _is_publication_masthead_only(unit.text)
+        and len(unit.text) <= 200
+        and len(unit.text.split()) <= 20
+        and all(_looks_like_article_heading(line) for line in lines)
+    )
+
+
+def _is_publication_masthead_only(text: str) -> bool:
+    folded = text.casefold().replace("î", "i")
+    return bool(
+        "resmi gazete" in folded
+        and ("sayı" in folded or "sayi" in folded or "resmi gazete no" in folded)
+        and "madde" not in folded
+    )
 
 
 def _pack_units(

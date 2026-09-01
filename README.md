@@ -12,8 +12,8 @@ retrieval, RRF hybrid retrieval ve optional cross-encoder reranking katmanların
 içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modelleri
 yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
 indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
-chunking, corpus indeksi ve benchmark deneyleri henüz çalıştırılmamıştır. Dolayısıyla
-yayımlanmış bir benchmark sonucu yoktur.
+gerçek page-safe chunking de tamamlanmıştır. Corpus indeksi ve benchmark deneyleri
+henüz çalıştırılmamıştır. Dolayısıyla yayımlanmış bir benchmark sonucu yoktur.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
@@ -107,7 +107,18 @@ Bu aşamada bir model tokenizer'ı indirilmez. `estimated_tokens` değeri gerçe
 token sayısı değildir; Unicode lexeme sayısı ile config'deki karakter/token
 oranının büyük olanını kullanan deterministik bir güvenlik tahminidir. Kullanılan
 yöntem her chunk'ın `token_count_method` alanında açıkça kaydedilir. Gerçek model
-tokenizer'ı embedding aşamasında ayrıca doğrulanacaktır.
+tokenizer'ı ayrıca doğrulanmalıdır.
+
+2026-09-01 gerçek chunk checkpoint'inde 68 metin sayfasından 436 chunk üretilmiştir.
+Yereldeki doğrulanmış E5 tokenizer `local_files_only=True`, `passage: ` öneki ve
+özel tokenlarla bütün chunk'lara uygulanmış; gerçek token sayısı min/ortalama/max
+`18 / 139,84 / 289` olmuş ve 512 sınırını aşan chunk bulunmamıştır. Deterministik
+tahmin ortalaması `205,39`; gerçek eksi tahmini token farkı ortalama `-65,56`
+olmuştur. 109 chunk pozitif overlap taşımış; tahmini overlap min/ortalama/max
+`42 / 53,33 / 95` olarak ölçülmüştür. Boş, yalnız sayfa chrome'u içeren veya birden
+fazla `MADDE` başlangıcı taşıyan chunk yoktur. Farklı belge ve sayfalardaki gerçek
+ortak mevzuat metinlerinden kaynaklanan 9 exact-duplicate grup, trusted citation
+metadata'sını kaybetmemek için korunmuştur.
 
 ## BM25 sparse retrieval ve RRF
 
