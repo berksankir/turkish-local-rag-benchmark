@@ -46,6 +46,7 @@ def test_paths_are_resolved_from_config_location() -> None:
     assert paths.evaluation_candidates == Path(
         "evaluation/candidates.jsonl"
     ).resolve()
+    assert paths.evaluation_review == Path("evaluation/review.csv").resolve()
     assert paths.evaluation_gold == Path("evaluation/gold.jsonl").resolve()
     assert paths.evaluation_results_directory == Path(
         "evaluation/results"

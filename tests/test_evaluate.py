@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from turkish_local_rag.candidates import Candidate, load_candidates
+from turkish_local_rag.candidates import Candidate
 from turkish_local_rag.evaluate import (
     EvaluationError,
     GoldRecord,
@@ -67,19 +67,6 @@ def _hit(document_id: str, page: int, rank: int) -> RetrievalHit:
         retriever="test",
         chunk=_chunk(document_id, page, rank),
     )
-
-
-def test_committed_gold_preserves_all_approved_candidates_and_split() -> None:
-    candidates = load_candidates("evaluation/candidates.jsonl")
-
-    gold = load_gold("evaluation/gold.jsonl", candidates)
-
-    assert len(gold) == 50
-    assert sum(record.split == "dev" for record in gold) == 10
-    assert sum(record.split == "test" for record in gold) == 40
-    assert [record.candidate.candidate_id for record in gold] == [
-        candidate.candidate_id for candidate in candidates
-    ]
 
 
 def test_gold_loader_rejects_post_review_changes(tmp_path: Path) -> None:

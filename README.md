@@ -13,12 +13,15 @@ içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modell
 yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
 indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
 gerçek page-safe chunking ve Qdrant local-mode dense corpus indeksi de tamamlanmıştır.
-İnsan tarafından onaylanan 50 kayıtlı gold set ile dört retrieval pipeline'ının
-local CPU benchmark'ı da gerçek corpus üzerinde tamamlanmıştır.
+Elli AI-generated evaluation adayının kaynak span bütünlüğü otomatik olarak
+doğrulanmıştır; ancak kayıtlar henüz insan incelemesinden geçmemiştir. Bu adaylarla
+yapılan eski retrieval koşusu yalnızca provisional teknik sonuç olarak arşivlenmiştir
+ve nihai gold benchmark değildir.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
-gate, citation uygulama katmanı ve generation sonraki aşamalardır.
+gate, citation uygulama katmanı ve generation; insan review ve nihai retrieval
+benchmark tamamlanana kadar başlatılmaz.
 
 ## Config ve testler
 
@@ -218,32 +221,42 @@ Model CPU, `local_files_only=True`, maksimum 512 token ve batch size 4 ile
 için kullanılır; citation alanları trusted chunk metadata'sından gelir. Model
 Apache-2.0 lisanslıdır. mMARCO model kartının eğitim dili listesinde Türkçe
 bulunmadığından bu bileşen açıkça zero-shot deneydir. Fayda sağladığı
-varsayılmaz; karar aynı insan-onaylı gold sette yapılacak retrieval evaluation'a
-bırakılır.
+varsayılmaz; karar, adaylar gerçek kullanıcı onayından geçtikten sonra oluşturulacak
+aynı gold setteki retrieval evaluation'a bırakılır.
 
 ## Evaluation adayları
 
-`evaluation/candidates.jsonl`, insan incelemesine sunulan ve onaylanan 40
-cevaplanabilir ve 10 corpus dışı cevaplanamaz kaydı korur. Aynı immutable
-`candidate_id` değerleri `evaluation/gold.jsonl` dosyasına aktarılmıştır. Gold split,
-retrieval sonucu görülmeden 10 dev (8 cevaplanabilir, 2 cevaplanamaz) ve 40 test
-(32 cevaplanabilir, 8 cevaplanamaz) olarak sabitlenmiştir. Cevaplanabilir her kayıt
-bir belge kimliği, fiziksel PDF sayfası ve extracted sayfa metninde birebir bulunan
-kaynak span'i taşır.
+`evaluation/candidates.jsonl`, değiştirilmeden korunan 40 cevaplanabilir ve 10
+cevaplanamaz AI-generated aday içerir. Otomatik kontrol, cevaplanabilir kayıtların
+exact source span'lerinin belirtilen extracted belge ve fiziksel sayfada birebir
+bulunduğunu doğrular; bu kontrol insan onayı değildir. Cevaplanamaz kayıtların
+gerçekten corpus dışı olup olmadığı da insan tarafından incelenmelidir.
 
-Gold bütünlüğünü ve span'leri doğrulayıp dört pipeline'ı çalıştırmak için:
+İnceleme dosyası `evaluation/review.csv` içinde 50 kayıt da `pending` durumundadır.
+CSV'de yalnızca `review_status` ve `review_notes` alanları düzenlenmelidir;
+candidate alanları ve `proposed_split` değiştirilirse doğrulayıcı kaydı reddeder.
+Geçerli durumlar `pending`, `approved`, `needs_changes` ve `rejected` değerleridir.
+Kaynak span'deki satır sonları CSV'de okunabilirlik için `\n` olarak gösterilir.
+
+Review dosyasını ve otomatik span bütünlüğünü kontrol etmek için:
 
 ```powershell
-.\.venv\Scripts\python.exe -m turkish_local_rag.evaluate --config config\default.toml
+.\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml validate
 ```
 
-Gerçek koşunun JSON, CSV ve Markdown sonuçları `evaluation/results/` altındadır.
-Test split'inde hybrid + reranker R@1 0,8125, R@5 1,0000 ve MRR 0,8917;
-hybrid RRF R@1 0,7188 ve MRR 0,8342 üretmiştir. Bununla birlikte hybrid + reranker
-ortalama 1468,325 ms ile hybrid RRF'nin 42,728 ms değerinden belirgin biçimde
-yavaştır. Reranker dev R@1'i hybrid RRF'ye göre 0,7500'den 0,6250'ye
-düşürmüştür; faydası bütün metriklerde tutarlı değildir. Test split'ine göre
-retrieval veya threshold ayarı yapılmamıştır.
+Gold builder yalnızca `approved` kayıtları aktarır; diğer üç durum gold dışında
+kalır. Kullanıcı review'u tamamlandıktan sonra çalıştırılacak komut:
+
+```powershell
+.\.venv\Scripts\python.exe -m turkish_local_rag.review --config config\default.toml build-gold
+```
+
+Final evaluator, bütün kayıtlar insan tarafından `approved` veya `rejected`
+olarak sonuçlandırılmadan çalışmayı reddeder. `rejected` kayıtlar gold'a
+girmez; benchmark yalnızca `approved` kayıtları kullanır.
+AI adaylarıyla yapılan eski teknik koşunun değiştirilmemiş çıktıları
+`evaluation/provisional/2026-09-01-ai-candidates/` altındadır. Bunlar pipeline'ın
+çalıştığını gösterir; nihai benchmark sonucu olarak kullanılamaz.
 
 ## Veri ve kullanım uyarıları
 

@@ -253,7 +253,35 @@ def run_benchmark(
     sources = load_manifest(paths.source_manifest)
     candidates = load_candidates(paths.evaluation_candidates)
     validate_candidate_set(candidates, sources, paths.extracted_pages_directory)
-    gold = load_gold(paths.evaluation_gold, candidates)
+    from turkish_local_rag.review import (
+        approved_candidates,
+        approved_split_counts,
+        load_review,
+        validate_review_grounding,
+    )
+
+    reviews = load_review(paths.evaluation_review, candidates)
+    validate_review_grounding(reviews, sources, paths.extracted_pages_directory)
+    unresolved = [
+        review.candidate.candidate_id
+        for review in reviews
+        if review.review_status in {"pending", "needs_changes"}
+    ]
+    if unresolved:
+        raise EvaluationError(
+            "final benchmark requires every review to be resolved as approved or "
+            f"rejected: unresolved={len(unresolved)}"
+        )
+    approved = approved_candidates(reviews)
+    if not approved:
+        raise EvaluationError(
+            "final benchmark requires at least one explicitly approved candidate"
+        )
+    gold = load_gold(
+        paths.evaluation_gold,
+        approved,
+        expected_split_counts=approved_split_counts(reviews),
+    )
     chunks = load_chunk_corpus(paths.chunks_directory, sources)
     if config.reranker.top_k < 5:
         raise EvaluationError("common retrieval result limit must be at least 5")
@@ -514,7 +542,8 @@ def _reproducibility_metadata(
         "config_sha256": _sha256_file(Path(config_path)),
         "config": asdict(config),
         "manifest_sha256": _sha256_file(paths.source_manifest),
-        "approved_candidates_sha256": _sha256_file(paths.evaluation_candidates),
+        "candidate_set_sha256": _sha256_file(paths.evaluation_candidates),
+        "human_review_sha256": _sha256_file(paths.evaluation_review),
         "gold_sha256": _sha256_file(paths.evaluation_gold),
         "chunk_file_sha256": chunk_hashes,
         "logical_corpus_sha256": logical_corpus.hexdigest(),
