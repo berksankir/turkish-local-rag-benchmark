@@ -11,6 +11,7 @@ from turkish_local_rag.config import ExtractionConfig, ResolvedPaths
 from turkish_local_rag.download import SourceDocument
 from turkish_local_rag.extract import (
     ExtractionError,
+    _normalize_extracted_text,
     _remove_repeated_marginal_content,
     _repair_pdf_glyphs,
     extract_document,
@@ -102,6 +103,8 @@ def test_extraction_preserves_pages_order_and_trusted_metadata(tmp_path: Path) -
     assert records[0]["source_page_url"] == SOURCE.source_page_url
     assert records[0]["pdf_sha256"] == expected_hash
     assert records[0]["blocks"][0]["block_id"] == "test-document:p1:b0"
+    assert records[0]["raw_text"] == "MADDE 1 - Birinci blok\n\nIkinci blok"
+    assert records[0]["blocks"][0]["raw_text"] == "MADDE 1 - Birinci blok"
     assert not list(paths.extracted_pages_directory.glob("*.tmp"))
 
 
@@ -150,6 +153,14 @@ def test_missing_download_metadata_blocks_extraction(tmp_path: Path) -> None:
 def test_evidenced_pdf_glyph_mappings_are_repaired() -> None:
     assert _repair_pdf_glyphs("Ün\u0d74vers\u0d74tes\u0d74 resm\u0d88gazete") == (
         "Üniversitesi resmigazete"
+    )
+
+
+def test_only_evidenced_misdecoded_initial_ilgili_is_repaired() -> None:
+    raw = "ğ) ılgili mevzuat; ilgili birim, ılık hava ve kırılgılı yapı."
+
+    assert _normalize_extracted_text(raw) == (
+        "ğ) İlgili mevzuat; ilgili birim, ılık hava ve kırılgılı yapı."
     )
 
 

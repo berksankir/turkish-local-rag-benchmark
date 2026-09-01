@@ -22,6 +22,7 @@ from turkish_local_rag.download import SourceDocument, load_manifest, sha256_fil
 
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 PAGE_COUNTER_PATTERN = re.compile(r"^(\d+)\s*/\s*(\d+)$")
+MISDECODED_INITIAL_ILGILI_PATTERN = re.compile(r"(?<!\w)ılgili(?!\w)")
 
 # Some embedded fonts in the trusted Turkish corpus expose an incorrect
 # ToUnicode map. These two non-Turkish code points consistently represent a
@@ -98,6 +99,7 @@ def extract_document(
                 temporary_path = Path(temporary_file.name)
                 for page_number, _page_height, blocks in extracted_page_blocks:
                     page_text = "\n\n".join(block["text"] for block in blocks)
+                    raw_page_text = "\n\n".join(block["raw_text"] for block in blocks)
                     if not page_text and not settings.include_empty_pages:
                         continue
                     record = {
@@ -109,6 +111,7 @@ def extract_document(
                         "pdf_url": source.pdf_url,
                         "pdf_sha256": pdf_sha256,
                         "text": page_text,
+                        "raw_text": raw_page_text,
                         "blocks": blocks,
                     }
                     json.dump(record, temporary_file, ensure_ascii=False)
@@ -203,7 +206,8 @@ def _extract_text_blocks(
         block_type = int(raw_block[6]) if len(raw_block) > 6 else 0
         if block_type != 0:
             continue
-        text = _repair_pdf_glyphs(str(raw_block[4])).strip()
+        raw_text = str(raw_block[4]).strip()
+        text = _normalize_extracted_text(raw_text)
         if not text:
             continue
         block_index = len(extracted)
@@ -212,6 +216,7 @@ def _extract_text_blocks(
                 "block_id": f"{document_id}:p{page_number}:b{block_index}",
                 "bbox": [round(float(value), 3) for value in raw_block[:4]],
                 "text": text,
+                "raw_text": raw_text,
             }
         )
     return extracted
@@ -221,6 +226,13 @@ def _repair_pdf_glyphs(text: str) -> str:
     """Repair evidenced non-Turkish glyph mappings in trusted Turkish PDFs."""
 
     return text.translate(PDF_GLYPH_REPAIRS)
+
+
+def _normalize_extracted_text(text: str) -> str:
+    """Apply only corpus-evidenced PDF text-layer repairs."""
+
+    repaired = _repair_pdf_glyphs(text)
+    return MISDECODED_INITIAL_ILGILI_PATTERN.sub("İlgili", repaired)
 
 
 def _remove_repeated_marginal_content(
