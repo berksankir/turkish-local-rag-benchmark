@@ -181,6 +181,30 @@ def test_qdrant_local_index_and_dense_search_preserve_metadata() -> None:
         assert hits[0].chunk.page_number == 3
         assert hits[0].chunk.source_page_url == "https://example.test/source"
         assert hits[0].retriever == "dense"
+        assert client.count(settings.collection_name, exact=True).count == 2
+        stored = client.retrieve(
+            collection_name=settings.collection_name,
+            ids=[dense_point_id(chunks[0].chunk_id)],
+            with_payload=True,
+            with_vectors=False,
+        )[0]
+        assert stored.payload == {
+            "schema_version": 1,
+            "chunk_id": chunks[0].chunk_id,
+            "document_id": chunks[0].document_id,
+            "title": chunks[0].title,
+            "page_number": chunks[0].page_number,
+            "source_page_url": chunks[0].source_page_url,
+            "pdf_url": chunks[0].pdf_url,
+            "pdf_sha256": chunks[0].pdf_sha256,
+            "source_block_ids": list(chunks[0].source_block_ids),
+            "text": chunks[0].text,
+            "estimated_tokens": chunks[0].estimated_tokens,
+            "token_count_method": chunks[0].token_count_method,
+            "embedding_model_id": settings.model_id,
+            "embedding_model_revision": settings.model_revision,
+            "embedding_prefix": settings.passage_prefix,
+        }
     finally:
         client.close()
 

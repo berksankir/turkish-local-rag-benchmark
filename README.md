@@ -12,8 +12,9 @@ retrieval, RRF hybrid retrieval ve optional cross-encoder reranking katmanların
 içerir. Geliştirme bağımlılıkları kurulmuş, embedding ve reranker modelleri
 yerelde doğrulanmıştır. Dokuz kaynak PDF ignore edilen yerel corpus klasörüne
 indirilip hash'leri doğrulanmış ve gerçek sayfa-seviyesi extraction tamamlanmıştır;
-gerçek page-safe chunking de tamamlanmıştır. Corpus indeksi ve benchmark deneyleri
-henüz çalıştırılmamıştır. Dolayısıyla yayımlanmış bir benchmark sonucu yoktur.
+gerçek page-safe chunking ve Qdrant local-mode dense corpus indeksi de tamamlanmıştır.
+Yalnız smoke sorguları çalıştırılmış, gold benchmark deneyleri yapılmamıştır.
+Dolayısıyla yayımlanmış bir benchmark sonucu yoktur.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
 retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
@@ -89,6 +90,10 @@ sayfası boş olduğu için tek boş sayfa olarak korunmuş fakat JSONL kaydı
 Türkçe `i` yerine verdiği iki yabancı Unicode glifi kanıtlanmış dönüşümle
 onarılmış; sayfaların en az %80'inde aynı marj konumlarında yinelenen header,
 footer ve fiziksel sayfa sayaçları çıkarımdan temizlenmiştir. OCR kullanılmamıştır.
+PyMuPDF kaynak metni sayfa ve block düzeyinde `raw_text` alanında ayrıca korunur.
+Kaynak text layer'da yalnız tam sözcük olarak görülen `ılgili`, kanıtlanmış yedi
+konumda `(?<!\w)ılgili(?!\w)` kuralıyla `İlgili` olarak normalize edilir; diğer
+noktasız `ı` karakterlerine veya doğru küçük `ilgili` sözcüklerine dokunulmaz.
 
 ## Yapı-farkındalıklı chunking
 
@@ -112,8 +117,8 @@ tokenizer'ı ayrıca doğrulanmalıdır.
 2026-09-01 gerçek chunk checkpoint'inde 68 metin sayfasından 436 chunk üretilmiştir.
 Yereldeki doğrulanmış E5 tokenizer `local_files_only=True`, `passage: ` öneki ve
 özel tokenlarla bütün chunk'lara uygulanmış; gerçek token sayısı min/ortalama/max
-`18 / 139,84 / 289` olmuş ve 512 sınırını aşan chunk bulunmamıştır. Deterministik
-tahmin ortalaması `205,39`; gerçek eksi tahmini token farkı ortalama `-65,56`
+`18 / 139,81 / 289` olmuş ve 512 sınırını aşan chunk bulunmamıştır. Deterministik
+tahmin ortalaması `205,39`; gerçek eksi tahmini token farkı ortalama `-65,59`
 olmuştur. 109 chunk pozitif overlap taşımış; tahmini overlap min/ortalama/max
 `42 / 53,33 / 95` olarak ölçülmüştür. Boş, yalnız sayfa chrome'u içeren veya birden
 fazla `MADDE` başlangıcı taşıyan chunk yoktur. Farklı belge ve sayfalardaki gerçek
@@ -163,6 +168,23 @@ Qdrant, `qdrant-client` disk-persistent local mode ile `indexes/qdrant/` altınd
 çalışır; Docker, server veya cloud bağlantısı yoktur. Mevcut collection ancak
 `--rebuild` açıkça verilirse değiştirilir. Qdrant payload metadata'sı her sorguda
 trusted chunk JSONL kaydıyla karşılaştırılır.
+
+2026-09-01 gerçek dense index checkpoint'inde 436 chunk, 384 boyutlu normalize
+vektörlerle `chunks_e5_small_v1` collection'ına yazılmıştır. Tüm point ID'leri,
+payload'lar ve vektörler üzerinde hesaplanan mantıksal SHA-256 fingerprint
+`ed36a52e3d0d39d2aee348e4d19c4834a25b6a023b367ce2a8bcd9f9a0c44566` olmuş;
+explicit `--rebuild` sonrasında aynı fingerprint yeniden elde edilmiştir. Final
+index boyutu 2.495.132 bayttır. İlk oluşturma 77,549 saniye; ölçümlü rebuild
+40,430 saniye sürmüş ve Windows process sayacında yaklaşık 971.206.656 bayt
+(926 MiB) peak working set görülmüştür. Bu süre ve bellek değerleri yalnız bu
+makinedeki smoke ölçümüdür, benchmark sonucu değildir.
+
+Altı dense smoke sorgusunda trusted `document_id`, fiziksel sayfa, source URL,
+PDF URL ve PDF SHA-256 payload'ları kaynak chunk kayıtlarıyla eşleşmiştir. İlk
+ısınma sorgusu 206,264 ms, sonraki beş sorgu 18,238–21,185 ms sürmüştür. Mütevelli
+Heyet, öğrenim ücretleri, ihale komisyonları, doktora tez izleme komitesi, İngilizce
+muafiyet ve Veri Analitiği Merkezi sorgularının top-1 sonuçları ilgili gerçek
+belge ve sayfalardan gelmiştir; bunlar gold evaluation olarak kullanılmaz.
 
 İndeks oluşturulduktan sonra aynı sorgu arayüzü dense veya RRF hybrid modunda
 çalıştırılabilir. Varsayılan mod `hybrid`'dir; BM25 ve cosine skorları doğrudan
