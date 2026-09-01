@@ -23,6 +23,7 @@ class ResolvedPaths:
     embedding_model_directory: Path
     reranker_model_directory: Path
     qdrant_directory: Path
+    evaluation_candidates: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +37,7 @@ class PathsConfig:
     embedding_model_directory: str
     reranker_model_directory: str
     qdrant_directory: str
+    evaluation_candidates: str
 
     def validate(self) -> None:
         for name, value in (
@@ -48,6 +50,7 @@ class PathsConfig:
             ("embedding_model_directory", self.embedding_model_directory),
             ("reranker_model_directory", self.reranker_model_directory),
             ("qdrant_directory", self.qdrant_directory),
+            ("evaluation_candidates", self.evaluation_candidates),
         ):
             if not value.strip():
                 raise ConfigError(f"paths.{name} cannot be empty")
@@ -91,6 +94,11 @@ class PathsConfig:
             ),
             qdrant_directory=_resolve_within_project(
                 project_root, self.qdrant_directory, "paths.qdrant_directory"
+            ),
+            evaluation_candidates=_resolve_within_project(
+                project_root,
+                self.evaluation_candidates,
+                "paths.evaluation_candidates",
             ),
         )
 
@@ -354,6 +362,7 @@ def load_config(path: str | Path) -> ProjectConfig:
             "embedding_model_directory",
             "reranker_model_directory",
             "qdrant_directory",
+            "evaluation_candidates",
         },
         "paths",
     )
@@ -438,6 +447,9 @@ def load_config(path: str | Path) -> ProjectConfig:
                 paths, "reranker_model_directory", "paths"
             ),
             qdrant_directory=_string(paths, "qdrant_directory", "paths"),
+            evaluation_candidates=_string(
+                paths, "evaluation_candidates", "paths"
+            ),
         ),
         downloader=DownloaderConfig(
             timeout_seconds=_integer(downloader, "timeout_seconds", "downloader"),

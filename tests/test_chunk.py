@@ -30,6 +30,7 @@ def _paths(tmp_path: Path) -> ResolvedPaths:
         embedding_model_directory=tmp_path / "model",
         reranker_model_directory=tmp_path / "reranker",
         qdrant_directory=tmp_path / "qdrant",
+        evaluation_candidates=tmp_path / "evaluation" / "candidates.jsonl",
     )
 
 

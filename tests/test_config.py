@@ -43,6 +43,9 @@ def test_paths_are_resolved_from_config_location() -> None:
         "models/mmarco-mMiniLMv2-L12-H384-v1"
     ).resolve()
     assert paths.qdrant_directory == Path("indexes/qdrant").resolve()
+    assert paths.evaluation_candidates == Path(
+        "evaluation/candidates.jsonl"
+    ).resolve()
 
 
 def test_page_boundary_protection_cannot_be_disabled(tmp_path: Path) -> None:

@@ -221,6 +221,21 @@ bulunmadığından bu bileşen açıkça zero-shot deneydir. Fayda sağladığı
 varsayılmaz; karar aynı insan-onaylı gold sette yapılacak retrieval evaluation'a
 bırakılır.
 
+## Evaluation adayları
+
+`evaluation/candidates.jsonl`, insan incelemesine sunulan 40 cevaplanabilir ve 10
+corpus dışı cevaplanamaz soru taslağı içerir. Bu dosya bir gold set veya benchmark
+sonucu değildir. Cevaplanabilir her kayıt bir belge kimliği, fiziksel PDF sayfası ve
+extracted sayfa metninde birebir bulunan kaynak span'i taşır. Doğrulayıcı whitespace
+ya da Unicode normalizasyonu yapmadan katı alt dize eşleşmesi uygular:
+
+```powershell
+.\.venv\Scripts\python.exe -m turkish_local_rag.candidates --config config\default.toml
+```
+
+`gold.jsonl` ancak adaylar insan tarafından incelenip açıkça onaylandıktan sonraki
+fazda oluşturulacaktır.
+
 ## Veri ve kullanım uyarıları
 
 - Kaynak PDF'ler repository'ye commit edilmez; yerel `data/pdfs/` klasörü Git
