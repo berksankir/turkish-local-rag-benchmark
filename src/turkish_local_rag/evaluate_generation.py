@@ -91,7 +91,7 @@ def run_evaluation(config_path: str | Path, *, overwrite: bool = False) -> dict[
     )
     dataset_metadata["records"] = len(records)
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "dataset": dataset_metadata,
         "protocol": {
             "pipelines": list(PIPELINES),
@@ -103,6 +103,16 @@ def run_evaluation(config_path: str | Path, *, overwrite: bool = False) -> dict[
                 "and contain the exact source span after whitespace/case normalization"
             ),
             "key_fact_coverage": "deterministic mean reference-fact token recall",
+            "generator_output_schema_version": "1.1",
+            "llama_cpp_response_format": {
+                "runtime_release": config.generation.runtime_version,
+                "type": "json_schema",
+                "schema_location": "response_format.schema",
+                "documentation": (
+                    "https://github.com/ggml-org/llama.cpp/blob/"
+                    "b10621/tools/server/README.md"
+                ),
+            },
         },
         "runtime": {
             "started_at_utc": started.isoformat().replace("+00:00", "Z"),
@@ -177,6 +187,7 @@ def _score(record: Any, response: Mapping[str, Any]) -> dict[str, Any]:
         "answer": response["answer"],
         "abstained": response["abstained"],
         "abstention_reason": response["abstention_reason"],
+        "generation_error": response.get("generation_error"),
         "citations": response["citations"],
         "retrieved_chunks": hits,
         "retrieval": {
@@ -296,7 +307,8 @@ def _render_csv(
     result_fields = [
         "candidate_id", "split", "pipeline", "answerable", "abstained",
         "abstention_reason", "answer", "citation_accuracy", "token_f1",
-        "key_fact_coverage",
+        "key_fact_coverage", "generator_error_category",
+        "generator_error_summary", "generator_error_attempts",
     ]
     fields = [
         *provenance_csv_fields(),
@@ -308,13 +320,25 @@ def _render_csv(
     for row in results:
         writer.writerow({
             **provenance_csv_values(dataset),
-            **{key: row[key] for key in result_fields},
+            **{key: _csv_result_value(row, key) for key in result_fields},
             "retrieval_ms": row["latency_ms"]["retrieval"],
             "reranking_ms": row["latency_ms"]["reranking"],
             "generation_ms": row["latency_ms"]["generation"],
             "total_ms": row["latency_ms"]["total"],
         })
     return output.getvalue()
+
+
+def _csv_result_value(row: Mapping[str, Any], key: str) -> Any:
+    diagnostic = row.get("generation_error") or {}
+    diagnostic_fields = {
+        "generator_error_category": "category",
+        "generator_error_summary": "validation_summary",
+        "generator_error_attempts": "attempts",
+    }
+    if key in diagnostic_fields:
+        return diagnostic.get(diagnostic_fields[key])
+    return row[key]
 
 
 def _render_markdown(payload: Mapping[str, Any]) -> str:
@@ -339,6 +363,12 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
                 f"{_fmt(row['key_fact_coverage'])} | {row['latency_ms']['total']['mean']:.1f} |"
             )
     runtime = payload["runtime"]
+    generator_failures: dict[str, int] = {}
+    for row in payload["queries"]:
+        diagnostic = row.get("generation_error")
+        if diagnostic:
+            category = diagnostic["category"]
+            generator_failures[category] = generator_failures.get(category, 0) + 1
     lines.extend([
         "",
         "## Latency (all split, milliseconds)",
@@ -362,8 +392,14 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
         "Latency alanları retrieval, reranking, generation ve total olarak ayrı ölçülmüştür. "
         "Citation ve cevap metrikleri deterministic karşılaştırmalardır; semantik judge kullanılmaz.",
         "Pipeline'lar ardışık çalıştırıldığı, response uzunlukları değiştiği ve cache ısındığı için "
-        "generation latency farkı doğrudan reranker hız etkisi olarak yorumlanamaz. Her pipeline'da "
-        "beş model çıktısı `generator_invalid_json` nedeniyle fail-closed abstention olmuştur.",
+        "generation latency farkı doğrudan reranker hız etkisi olarak yorumlanamaz.",
+        "Generator validation failures (all pipelines combined): "
+        + (
+            ", ".join(f"`{key}`={value}" for key, value in sorted(generator_failures.items()))
+            if generator_failures
+            else "none"
+        )
+        + ". All such failures remain fail-closed abstentions; raw model responses are not stored.",
         "",
     ])
     return "\n".join(lines)

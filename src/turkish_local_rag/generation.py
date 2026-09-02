@@ -18,7 +18,8 @@ from turkish_local_rag.config import EvidenceConfig, GeneratorConfig
 from turkish_local_rag.retrieve import ChunkRecord, turkish_tokenize
 
 
-OUTPUT_SCHEMA_VERSION = "1.0"
+OUTPUT_SCHEMA_VERSION = "1.1"
+MAX_GENERATOR_DEBUG_CHARS = 240
 ABSTAIN_ANSWER = "Yeterli kanıt bulunamadı."
 GENERATOR_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -43,6 +44,26 @@ class GenerationError(RuntimeError):
 
 class GenerationTimeout(GenerationError):
     """Raised when the local generator exceeds its configured timeout."""
+
+
+class GeneratorOutputError(GenerationError):
+    """A safely categorized generator-output validation failure."""
+
+    def __init__(
+        self,
+        category: str,
+        summary: str,
+        *,
+        debug_excerpt: str | None = None,
+    ) -> None:
+        super().__init__(summary)
+        self.category = category
+        self.summary = summary
+        self.debug_excerpt = debug_excerpt
+
+
+class GeneratorRuntimeError(GenerationError):
+    """Raised for a local runtime or API response failure."""
 
 
 class Generator(Protocol):
@@ -203,23 +224,79 @@ def parse_generator_output(text: str, allowed_context_ids: set[str]) -> ParsedGe
     try:
         raw = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise GenerationError(f"generator returned invalid JSON: {exc}") from exc
-    if not isinstance(raw, dict) or set(raw) != {"answer", "supporting_context_ids"}:
-        raise GenerationError("generator JSON must contain exactly answer and supporting_context_ids")
+        raise GeneratorOutputError(
+            "invalid_json_syntax",
+            f"JSON syntax error at line {exc.lineno}, column {exc.colno}",
+            debug_excerpt=_safe_debug_excerpt(text),
+        ) from exc
+    if not isinstance(raw, dict):
+        raise GeneratorOutputError(
+            "wrong_field_type", "generator output must be a JSON object"
+        )
+    expected_fields = {"answer", "supporting_context_ids"}
+    if set(raw) != expected_fields:
+        missing = sorted(expected_fields - set(raw))
+        extra = sorted(set(raw) - expected_fields)
+        raise GeneratorOutputError(
+            "missing_or_extra_fields",
+            f"generator object fields differ: missing={missing}, extra={extra}",
+        )
     answer = raw["answer"]
     context_ids = raw["supporting_context_ids"]
-    if not isinstance(answer, str) or not answer.strip():
-        raise GenerationError("generator answer must be a non-empty string")
-    if not isinstance(context_ids, list) or not context_ids:
-        raise GenerationError("generator must select at least one supporting context")
-    if not all(isinstance(value, str) and value for value in context_ids):
-        raise GenerationError("supporting_context_ids must contain non-empty strings")
+    if not isinstance(answer, str) or not isinstance(context_ids, list):
+        raise GeneratorOutputError(
+            "wrong_field_type",
+            "answer must be a string and supporting_context_ids must be a list",
+        )
+    if not answer.strip():
+        raise GeneratorOutputError("empty_answer", "answer must not be empty")
+    if not context_ids:
+        raise GeneratorOutputError(
+            "empty_supporting_context_list",
+            "supporting_context_ids must contain at least one context id",
+        )
+    if not all(isinstance(value, str) and value.strip() for value in context_ids):
+        raise GeneratorOutputError(
+            "wrong_field_type",
+            "supporting_context_ids must contain non-empty strings",
+        )
     if len(context_ids) != len(set(context_ids)):
-        raise GenerationError("supporting_context_ids must be unique")
+        raise GeneratorOutputError(
+            "duplicate_context_id", "supporting_context_ids must be unique"
+        )
     invented = sorted(set(context_ids) - allowed_context_ids)
     if invented:
-        raise GenerationError(f"generator selected untrusted chunk ids: {invented}")
+        raise GeneratorOutputError(
+            "invalid_context_id",
+            f"generator selected {len(invented)} untrusted context id(s)",
+        )
     return ParsedGeneration(answer.strip(), tuple(context_ids))
+
+
+def _safe_debug_excerpt(text: str) -> str | None:
+    """Return a single-line, bounded diagnostic excerpt, never a full raw response."""
+
+    compact = " ".join(text.split())
+    if not compact:
+        return None
+    if len(compact) <= MAX_GENERATOR_DEBUG_CHARS:
+        return compact
+    return compact[: MAX_GENERATOR_DEBUG_CHARS - 1] + "…"
+
+
+def _generation_error_payload(
+    category: str,
+    summary: str,
+    *,
+    attempts: int,
+    debug_excerpt: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "category": category,
+        "validation_summary": summary,
+        "debug_excerpt": debug_excerpt,
+        "attempts": attempts,
+    }
 
 
 def build_citation(chunk: ChunkRecord) -> dict[str, Any]:
@@ -273,6 +350,7 @@ class GroundedRAGService:
                 abstained=True,
                 abstention_reason=decision.reason,
                 citations=[],
+                generation_error=None,
                 generation_latency_ms=generation_ms,
                 total_start=total_start,
             )
@@ -288,7 +366,8 @@ class GroundedRAGService:
         }
         allowed = set(context_by_id)
         parsed: ParsedGeneration | None = None
-        failure_reason = "generator_invalid_json"
+        failure_reason = "generator_runtime_api_error"
+        generation_error: dict[str, Any] | None = None
         generation_start = perf_counter()
         for attempt in range(self._generation.max_retries + 1):
             prompt = user_prompt
@@ -303,9 +382,28 @@ class GroundedRAGService:
                 break
             except GenerationTimeout:
                 failure_reason = "generator_timeout"
+                generation_error = _generation_error_payload(
+                    "timeout",
+                    "local generator exceeded its configured timeout",
+                    attempts=attempt + 1,
+                )
                 break
+            except GeneratorOutputError as exc:
+                failure_reason = f"generator_{exc.category}"
+                generation_error = _generation_error_payload(
+                    exc.category,
+                    exc.summary,
+                    attempts=attempt + 1,
+                    debug_excerpt=exc.debug_excerpt,
+                )
             except GenerationError:
-                failure_reason = "generator_invalid_json"
+                failure_reason = "generator_runtime_api_error"
+                generation_error = _generation_error_payload(
+                    "runtime_api_error",
+                    "local generator runtime or API request failed",
+                    attempts=attempt + 1,
+                )
+                break
         generation_ms = (perf_counter() - generation_start) * 1000.0
         if parsed is None:
             return self._response(
@@ -317,6 +415,7 @@ class GroundedRAGService:
                 abstained=True,
                 abstention_reason=failure_reason,
                 citations=[],
+                generation_error=generation_error,
                 generation_latency_ms=generation_ms,
                 total_start=total_start,
             )
@@ -333,6 +432,7 @@ class GroundedRAGService:
             abstained=False,
             abstention_reason=None,
             citations=citations,
+            generation_error=None,
             generation_latency_ms=generation_ms,
             total_start=total_start,
         )
@@ -348,6 +448,7 @@ class GroundedRAGService:
         abstained: bool,
         abstention_reason: str | None,
         citations: list[dict[str, Any]],
+        generation_error: dict[str, Any] | None,
         generation_latency_ms: float,
         total_start: float,
     ) -> dict[str, Any]:
@@ -360,6 +461,7 @@ class GroundedRAGService:
             "abstained": abstained,
             "abstention_reason": abstention_reason,
             "citations": citations,
+            "generation_error": generation_error,
             "retrieved_chunks": retrieved,
             "scores": {
                 "query_coverage": decision.query_coverage,
@@ -401,13 +503,16 @@ def validate_query_response(payload: Mapping[str, Any]) -> None:
         "abstained",
         "abstention_reason",
         "citations",
+        "generation_error",
         "retrieved_chunks",
         "scores",
         "latency_ms",
         "models",
     }
     if set(payload) != expected or payload.get("schema_version") != OUTPUT_SCHEMA_VERSION:
-        raise GenerationError("query response does not match schema version 1.0")
+        raise GenerationError(
+            f"query response does not match schema version {OUTPUT_SCHEMA_VERSION}"
+        )
     if not isinstance(payload.get("question"), str) or not payload["question"].strip():
         raise GenerationError("query response question is invalid")
     if payload.get("pipeline") not in {"hybrid_rrf", "hybrid_reranked"}:
@@ -421,6 +526,54 @@ def validate_query_response(payload: Mapping[str, Any]) -> None:
             raise GenerationError("abstained response requires a reason and no citations")
     elif payload.get("abstention_reason") is not None or not payload["citations"]:
         raise GenerationError("successful response requires citations and no abstention reason")
+    generation_error = payload.get("generation_error")
+    if (
+        payload["abstained"]
+        and str(payload["abstention_reason"]).startswith("generator_")
+        and generation_error is None
+    ):
+        raise GenerationError("generator abstention requires generation_error details")
+    if (
+        payload["abstained"]
+        and not str(payload["abstention_reason"]).startswith("generator_")
+        and generation_error is not None
+    ):
+        raise GenerationError("evidence abstention must not contain generation_error")
+    if generation_error is not None:
+        if not payload["abstained"] or not str(payload["abstention_reason"]).startswith(
+            "generator_"
+        ):
+            raise GenerationError("generation_error is only valid for generator abstention")
+        if set(generation_error) != {
+            "category",
+            "validation_summary",
+            "debug_excerpt",
+            "attempts",
+        }:
+            raise GenerationError("generation_error diagnostic has invalid fields")
+        if generation_error["category"] not in {
+            "invalid_json_syntax",
+            "missing_or_extra_fields",
+            "wrong_field_type",
+            "empty_answer",
+            "empty_supporting_context_list",
+            "duplicate_context_id",
+            "invalid_context_id",
+            "timeout",
+            "runtime_api_error",
+        }:
+            raise GenerationError("generation_error category is invalid")
+        if not isinstance(generation_error["validation_summary"], str):
+            raise GenerationError("generation_error summary is invalid")
+        excerpt = generation_error["debug_excerpt"]
+        if excerpt is not None and (
+            not isinstance(excerpt, str) or len(excerpt) > MAX_GENERATOR_DEBUG_CHARS
+        ):
+            raise GenerationError("generation_error debug excerpt is invalid")
+        if not isinstance(generation_error["attempts"], int) or generation_error[
+            "attempts"
+        ] < 1:
+            raise GenerationError("generation_error attempts is invalid")
     if not isinstance(payload.get("retrieved_chunks"), list):
         raise GenerationError("retrieved_chunks must be a list")
     trusted = {item.get("chunk_id") for item in payload["retrieved_chunks"]}
@@ -542,26 +695,7 @@ class LlamaCppServerGenerator:
 
     def generate(self, system_prompt: str, user_prompt: str) -> str:
         self.start()
-        body = {
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "max_tokens": self.settings.max_output_tokens,
-            "temperature": self.settings.temperature,
-            "top_p": self.settings.top_p,
-            "top_k": self.settings.top_k,
-            "seed": self.settings.seed,
-            "stream": False,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "grounded_answer",
-                    "strict": True,
-                    "schema": GENERATOR_JSON_SCHEMA,
-                },
-            },
-        }
+        body = self._request_body(system_prompt, user_prompt)
         request = Request(
             self._base_url + "/v1/chat/completions",
             data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
@@ -574,11 +708,33 @@ class LlamaCppServerGenerator:
         except TimeoutError as exc:
             raise GenerationTimeout("llama-server generation timed out") from exc
         except (HTTPError, URLError, OSError, json.JSONDecodeError) as exc:
-            raise GenerationError(f"llama-server request failed: {exc}") from exc
+            raise GeneratorRuntimeError("llama-server request failed") from exc
         try:
             return raw["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
-            raise GenerationError("llama-server response is missing message content") from exc
+            raise GeneratorRuntimeError(
+                "llama-server response is missing message content"
+            ) from exc
+
+    def _request_body(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        """Build the b10621-compatible chat-completions request body."""
+
+        return {
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "max_tokens": self.settings.max_output_tokens,
+            "temperature": self.settings.temperature,
+            "top_p": self.settings.top_p,
+            "top_k": self.settings.top_k,
+            "seed": self.settings.seed,
+            "stream": False,
+            "response_format": {
+                "type": "json_schema",
+                "schema": GENERATOR_JSON_SCHEMA,
+            },
+        }
 
     def close(self) -> None:
         if self._process is None:

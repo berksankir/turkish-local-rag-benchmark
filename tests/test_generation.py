@@ -10,8 +10,11 @@ import pytest
 from turkish_local_rag.config import load_config
 from turkish_local_rag.generation import (
     ABSTAIN_ANSWER,
+    GENERATOR_JSON_SCHEMA,
+    MAX_GENERATOR_DEBUG_CHARS,
     GenerationError,
     GenerationTimeout,
+    GeneratorOutputError,
     GroundedRAGService,
     LlamaCppServerGenerator,
     RetrievalExecution,
@@ -127,6 +130,12 @@ def test_generator_timeout_returns_structured_abstention() -> None:
 
     assert result["abstention_reason"] == "generator_timeout"
     assert result["citations"] == []
+    assert result["generation_error"] == {
+        "category": "timeout",
+        "validation_summary": "local generator exceeded its configured timeout",
+        "debug_excerpt": None,
+        "attempts": 1,
+    }
 
 
 def test_invalid_json_has_one_retry_then_abstains() -> None:
@@ -136,7 +145,9 @@ def test_invalid_json_has_one_retry_then_abstains() -> None:
         "Üniversitenin en yüksek karar organı hangisidir?", "hybrid_rrf"
     )
 
-    assert result["abstention_reason"] == "generator_invalid_json"
+    assert result["abstention_reason"] == "generator_invalid_json_syntax"
+    assert result["generation_error"]["category"] == "invalid_json_syntax"
+    assert result["generation_error"]["attempts"] == 2
     assert generator.calls == 2
 
 
@@ -163,6 +174,7 @@ def test_invented_citation_is_rejected_and_never_serialized() -> None:
     assert result["abstained"] is True
     assert result["citations"] == []
     assert "C99" not in json.dumps(result, ensure_ascii=False)
+    assert result["generation_error"]["category"] == "invalid_context_id"
 
 
 def test_turkish_unicode_serialization_is_not_ascii_escaped() -> None:
@@ -222,11 +234,69 @@ def test_response_validator_rejects_citation_not_in_retrieval() -> None:
 
 
 def test_parser_rejects_extra_fields() -> None:
-    with pytest.raises(GenerationError, match="exactly"):
+    with pytest.raises(GeneratorOutputError) as captured:
         parse_generator_output(
             '{"answer":"x","supporting_context_ids":["C1"],"citation":"fake"}',
             {"C1"},
         )
+    assert captured.value.category == "missing_or_extra_fields"
+
+
+@pytest.mark.parametrize(
+    ("payload", "category"),
+    [
+        ('{"answer":7,"supporting_context_ids":["C1"]}', "wrong_field_type"),
+        ('{"answer":"  ","supporting_context_ids":["C1"]}', "empty_answer"),
+        ('{"answer":"x","supporting_context_ids":[]}', "empty_supporting_context_list"),
+        ('{"answer":"x","supporting_context_ids":["C1","C1"]}', "duplicate_context_id"),
+        ('{"answer":"x","supporting_context_ids":["C2"]}', "invalid_context_id"),
+    ],
+)
+def test_parser_classifies_structured_output_failures(
+    payload: str, category: str
+) -> None:
+    with pytest.raises(GeneratorOutputError) as captured:
+        parse_generator_output(payload, {"C1"})
+
+    assert captured.value.category == category
+
+
+def test_invalid_json_debug_excerpt_is_bounded() -> None:
+    with pytest.raises(GeneratorOutputError) as captured:
+        parse_generator_output("x" * 1000, {"C1"})
+
+    assert captured.value.category == "invalid_json_syntax"
+    assert captured.value.debug_excerpt is not None
+    assert len(captured.value.debug_excerpt) == MAX_GENERATOR_DEBUG_CHARS
+
+
+def test_runtime_error_is_fail_closed_and_safely_summarized() -> None:
+    generator = FakeGenerator([GenerationError("secret runtime response body")])
+
+    result = _service(generator).answer(
+        "Üniversitenin en yüksek karar organı hangisidir?", "hybrid_rrf"
+    )
+
+    assert result["abstention_reason"] == "generator_runtime_api_error"
+    assert result["generation_error"]["category"] == "runtime_api_error"
+    assert "secret" not in json.dumps(result)
+
+
+def test_b10621_request_uses_documented_direct_schema_shape(tmp_path: Path) -> None:
+    config = load_config("config/default.toml")
+    adapter = LlamaCppServerGenerator(
+        tmp_path / "model.gguf",
+        tmp_path / "llama-server.exe",
+        config.generation,
+    )
+
+    body = adapter._request_body("system", "user")
+
+    assert body["response_format"] == {
+        "type": "json_schema",
+        "schema": GENERATOR_JSON_SCHEMA,
+    }
+    assert "json_schema" not in body["response_format"]
 
 
 def test_adapter_verifies_model_and_runtime_archive_hashes(tmp_path: Path) -> None:
