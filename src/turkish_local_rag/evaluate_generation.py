@@ -19,6 +19,12 @@ from turkish_local_rag.candidates import load_candidates
 from turkish_local_rag.config import load_config
 from turkish_local_rag.evaluate import _process_memory_bytes, load_silver
 from turkish_local_rag.query import build_service
+from turkish_local_rag.provenance import (
+    build_silver_provenance,
+    provenance_csv_fields,
+    provenance_csv_values,
+    provenance_markdown_lines,
+)
 from turkish_local_rag.retrieve import normalize_turkish, turkish_tokenize
 from turkish_local_rag.review import (
     load_review,
@@ -78,20 +84,15 @@ def run_evaluation(config_path: str | Path, *, overwrite: bool = False) -> dict[
         generator.close()
         retriever.close()
     finished = datetime.now(timezone.utc)
+    dataset_metadata = build_silver_provenance(
+        review_status_counts(audit),
+        review_provenance_summary(audit),
+        total_records=len(records),
+    )
+    dataset_metadata["records"] = len(records)
     payload = {
-        "schema_version": 1,
-        "dataset": {
-            "kind": "silver",
-            "human_reviewed": False,
-            "description": (
-                "AI-assisted silver candidate set; audit sample decisions were supplied "
-                "by the user. This is not a gold or fully human-reviewed benchmark."
-            ),
-            "records": len(records),
-            "audit_records": len(audit),
-            "audit_provenance": review_provenance_summary(audit),
-            "audit_statuses": review_status_counts(audit),
-        },
+        "schema_version": 2,
+        "dataset": dataset_metadata,
         "protocol": {
             "pipelines": list(PIPELINES),
             "threshold_source": "silver dev only",
@@ -135,7 +136,7 @@ def run_evaluation(config_path: str | Path, *, overwrite: bool = False) -> dict[
         "queries": results,
     }
     _write_atomic(outputs["json"], json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    _write_atomic(outputs["csv"], _render_csv(results))
+    _write_atomic(outputs["csv"], _render_csv(results, dataset_metadata))
     _write_atomic(outputs["md"], _render_markdown(payload))
     return outputs
 
@@ -288,18 +289,26 @@ def _percentile(values: Sequence[float], fraction: float) -> float:
     return values[index]
 
 
-def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
+def _render_csv(
+    results: Sequence[Mapping[str, Any]], dataset: Mapping[str, Any]
+) -> str:
     output = io.StringIO(newline="")
-    fields = [
+    result_fields = [
         "candidate_id", "split", "pipeline", "answerable", "abstained",
         "abstention_reason", "answer", "citation_accuracy", "token_f1",
-        "key_fact_coverage", "retrieval_ms", "reranking_ms", "generation_ms", "total_ms",
+        "key_fact_coverage",
+    ]
+    fields = [
+        *provenance_csv_fields(),
+        *result_fields,
+        "retrieval_ms", "reranking_ms", "generation_ms", "total_ms",
     ]
     writer = csv.DictWriter(output, fieldnames=fields)
     writer.writeheader()
     for row in results:
         writer.writerow({
-            **{key: row[key] for key in fields[:10]},
+            **provenance_csv_values(dataset),
+            **{key: row[key] for key in result_fields},
             "retrieval_ms": row["latency_ms"]["retrieval"],
             "reranking_ms": row["latency_ms"]["reranking"],
             "generation_ms": row["latency_ms"]["generation"],
@@ -312,9 +321,9 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     lines = [
         "# AI-assisted silver grounded-generation benchmark",
         "",
-        "Bu sonuç gold veya tamamen human-reviewed değildir. `human_reviewed=false`; "
-        "yalnız kullanıcı kararlı audit örneği provenance olarak korunur. Test split model, "
-        "pipeline veya threshold seçimi için kullanılmamıştır. LLM-as-a-judge yoktur.",
+        *provenance_markdown_lines(),
+        "Test split model, pipeline veya threshold seçimi için kullanılmamıştır. "
+        "LLM-as-a-judge yoktur.",
         "",
         "| Split | Pipeline | R@1 | R@3 | R@5 | MRR | Citation | Coverage | Correct abstain | False abstain | Token F1 | Key facts | Mean total ms |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",

@@ -5,6 +5,12 @@ import io
 import json
 from pathlib import Path
 
+from turkish_local_rag.amend_provenance import _protected_digest
+from turkish_local_rag.provenance import (
+    SILVER_DESCRIPTION_EN,
+    SILVER_DESCRIPTION_TR,
+)
+
 
 ARCHIVE = Path("evaluation/provisional/2026-09-01-ai-candidates")
 CANONICAL_SILVER = Path("evaluation/results/silver")
@@ -17,6 +23,12 @@ SUMMARY_SHA256 = (
 MARKDOWN_METRIC_ROWS_SHA256 = (
     "12170f25e2e8188f263ad3c2ba8d8c16f0f3434ffb2253109fb7050b807cc0c6"
 )
+CURRENT_PROTECTED_CONTENT_SHA256 = {
+    "retrieval_benchmark": "0d4fa7e84ded8f169f3274163356efe8d3a94b6d7807567b554264793bcf9eaa",
+    "reranker_profile": "5792fc52ce39dff267945fe2428cc0b6c68926e8f0f0a0f66d26a221fb334488",
+    "evidence_gate_tuning": "b49d59ec7fb6e1d9e0fafe995ee751a6f4ec070b9ef1c59c5e4fa0df0ebb3491",
+    "generation_benchmark": "6738fadc023b68d69cb466602b5749a295150cafb096b27b0bb81117dbbaa100",
+}
 
 
 def test_provisional_json_is_self_describing_and_metrics_are_unchanged() -> None:
@@ -135,10 +147,16 @@ def test_canonical_silver_report_has_required_dataset_and_audit_metadata() -> No
         (CANONICAL_SILVER / "retrieval_benchmark.json").read_text(encoding="utf-8")
     )
 
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] == 3
     assert payload["dataset"]["kind"] == "silver"
     assert payload["dataset"]["human_reviewed"] is False
-    assert payload["dataset"]["audit_sample_records"] == 20
+    assert payload["dataset"]["all_records_human_reviewed"] is False
+    assert payload["dataset"]["dataset_release_approved"] is True
+    assert payload["dataset"]["audit_sample"] == {
+        "reviewed_records": 20,
+        "total_records": 50,
+        "approved_records": 20,
+    }
     assert payload["dataset"]["audit_statuses"] == {
         "approved": 20,
         "needs_changes": 0,
@@ -181,6 +199,7 @@ def test_reranker_profile_is_dev_only_and_reuses_one_model_instance() -> None:
     )
 
     assert payload["dataset"]["kind"] == "silver"
+    assert payload["schema_version"] == 2
     assert payload["dataset"]["human_reviewed"] is False
     assert payload["protocol"]["selection_split"] == "dev"
     assert payload["protocol"]["test_split_accessed_for_tuning"] is False
@@ -190,3 +209,82 @@ def test_reranker_profile_is_dev_only_and_reuses_one_model_instance() -> None:
     assert payload["runtime"]["chunk_count"] == 436
     assert len(payload["variants"]) == 4
     assert payload["selection"]["test_split_used"] is False
+
+
+def test_all_current_silver_artifacts_share_release_provenance() -> None:
+    report_names = (
+        "retrieval_benchmark",
+        "reranker_profile",
+        "evidence_gate_tuning",
+        "generation_benchmark",
+    )
+    for name in report_names:
+        payload = json.loads(
+            (CANONICAL_SILVER / f"{name}.json").read_text(encoding="utf-8")
+        )
+        assert _protected_digest(payload) == CURRENT_PROTECTED_CONTENT_SHA256[name]
+        dataset = payload["dataset"]
+        assert dataset["kind"] == "silver"
+        assert dataset["creation_method"] == "ai_assisted"
+        assert dataset["final_gold"] is False
+        assert dataset["dataset_release_approved"] is True
+        assert dataset["approved_by"] == "berksankir"
+        assert dataset["approval_scope"] == "dataset_level_with_sample_audit"
+        assert dataset["all_records_human_reviewed"] is False
+        assert dataset["human_reviewed"] is False
+        assert "dataset-level release approval is absent" in dataset[
+            "human_reviewed_semantics"
+        ]
+        assert dataset["audit_sample"] == {
+            "reviewed_records": 20,
+            "total_records": 50,
+            "approved_records": 20,
+        }
+
+        with (CANONICAL_SILVER / f"{name}.csv").open(
+            "r", encoding="utf-8", newline=""
+        ) as source:
+            csv_row = next(csv.DictReader(source))
+        assert csv_row["dataset_kind"] == "silver"
+        assert csv_row["creation_method"] == "ai_assisted"
+        assert csv_row["dataset_release_approved"] == "true"
+        assert csv_row["approved_by"] == "berksankir"
+        assert csv_row["approval_scope"] == "dataset_level_with_sample_audit"
+        assert csv_row["all_records_human_reviewed"] == "false"
+        assert csv_row["audit_reviewed_records"] == "20"
+        assert csv_row["audit_total_records"] == "50"
+
+        markdown = (CANONICAL_SILVER / f"{name}.md").read_text(encoding="utf-8")
+        assert SILVER_DESCRIPTION_EN in markdown
+        assert SILVER_DESCRIPTION_TR in markdown
+        assert "dataset_release_approved=true" in markdown
+        assert "final_gold=false" in markdown
+
+
+def test_remaining_thirty_records_have_no_fabricated_item_review() -> None:
+    with Path("evaluation/silver_audit.csv").open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as source:
+        audit_rows = list(csv.DictReader(source))
+    with Path("evaluation/review.csv").open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as source:
+        full_review_rows = list(csv.DictReader(source))
+    audit_ids = {row["candidate_id"] for row in audit_rows}
+    unaudited = [row for row in full_review_rows if row["candidate_id"] not in audit_ids]
+
+    assert len(audit_ids) == 20
+    assert len(unaudited) == 30
+    assert all(row["review_status"] == "pending" for row in unaudited)
+    assert all(row["reviewer"] == "" for row in unaudited)
+    assert all(row["reviewed_at_utc"] == "" for row in unaudited)
+
+
+def test_readme_matches_machine_readable_release_provenance() -> None:
+    readme = Path("README.md").read_text(encoding="utf-8")
+    normalized = " ".join(readme.split())
+
+    assert SILVER_DESCRIPTION_EN in normalized
+    assert SILVER_DESCRIPTION_TR in normalized
+    assert "`dataset_release_approved=true`" in readme
+    assert "`all_records_human_reviewed=false`" in readme

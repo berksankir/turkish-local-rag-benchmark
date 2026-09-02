@@ -28,6 +28,12 @@ from turkish_local_rag.candidates import (
 )
 from turkish_local_rag.config import ProjectConfig, ResolvedPaths, load_config
 from turkish_local_rag.download import SourceDocument, load_manifest
+from turkish_local_rag.provenance import (
+    build_silver_provenance,
+    provenance_csv_fields,
+    provenance_csv_values,
+    provenance_markdown_lines,
+)
 from turkish_local_rag.retrieve import (
     BM25Retriever,
     FusedHit,
@@ -362,17 +368,11 @@ def run_benchmark(
         )
         evaluation_set_path = paths.evaluation_silver
         review_artifact_path = paths.evaluation_silver_audit
-        dataset_metadata = {
-            "kind": "silver",
-            "human_reviewed": False,
-            "description": (
-                "AI-generated candidate set with automatic answerable span/page "
-                "integrity checks; automatic validation is not human approval."
-            ),
-            "audit_sample_records": len(audit_reviews),
-            "audit_provenance": review_provenance_summary(audit_reviews),
-            "audit_statuses": review_status_counts(audit_reviews),
-        }
+        dataset_metadata = build_silver_provenance(
+            review_status_counts(audit_reviews),
+            review_provenance_summary(audit_reviews),
+            total_records=len(evaluation_records),
+        )
     chunks = load_chunk_corpus(paths.chunks_directory, sources)
     if config.reranker.top_k < 5:
         raise EvaluationError("common retrieval result limit must be at least 5")
@@ -462,7 +462,7 @@ def run_benchmark(
     current_rss, peak_rss = _process_memory_bytes()
     finished_at = datetime.now(timezone.utc)
     payload = {
-        "schema_version": 2,
+        "schema_version": 3 if dataset == "silver" else 2,
         "dataset": dataset_metadata,
         "protocol": {
             "pipelines": list(PIPELINES),
@@ -498,7 +498,7 @@ def run_benchmark(
     }
     rendered = {
         "json": json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        "csv": _render_csv(results),
+        "csv": _render_csv(results, dataset_metadata),
         "markdown": _render_markdown(payload),
     }
     for key, path in output_paths.items():
@@ -666,9 +666,15 @@ def _reproducibility_metadata(
     }
 
 
-def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
-    fields = [
-        "dataset_kind",
+def _render_csv(
+    results: Sequence[Mapping[str, Any]], dataset: Mapping[str, Any]
+) -> str:
+    provenance_fields = (
+        list(provenance_csv_fields())
+        if dataset["kind"] == "silver"
+        else ["dataset_kind"]
+    )
+    fields = provenance_fields + [
         "candidate_id",
         "split",
         "pipeline",
@@ -694,7 +700,11 @@ def _render_csv(results: Sequence[Mapping[str, Any]]) -> str:
         top_hit = result["hits"][0] if result["hits"] else {}
         writer.writerow(
             {
-                "dataset_kind": result["dataset_kind"],
+                **(
+                    provenance_csv_values(dataset)
+                    if dataset["kind"] == "silver"
+                    else {"dataset_kind": result["dataset_kind"]}
+                ),
                 "candidate_id": result["candidate_id"],
                 "split": result["split"],
                 "pipeline": result["pipeline"],
@@ -726,10 +736,7 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     dataset = payload["dataset"]
     if dataset["kind"] == "silver":
         title = "# Silver retrieval benchmark"
-        dataset_statement = (
-            "Bu rapor AI-generated silver evaluation set üzerinde üretilmiştir. "
-            "Answerable span/page kontrolleri otomatiktir ve insan onayı değildir."
-        )
+        dataset_statement = None
         audit_statement = (
             "Human audit durumu: "
             + ", ".join(
@@ -748,12 +755,17 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     lines = [
         title,
         "",
-        dataset_statement,
+    ]
+    if dataset["kind"] == "silver":
+        lines.extend(provenance_markdown_lines())
+    else:
+        lines.extend([dataset_statement, ""])
+    lines.extend([
         audit_statement,
         "Unanswerable kayıtlar retrieval kalite paydalarına alınmamış, latency ölçümüne dahil edilmiştir.",
         "MRR, ortak top-10 sonuç listesi üzerinde hesaplanmıştır.",
         "",
-    ]
+    ])
     for split in (*SPLITS, "all"):
         lines.extend(
             [

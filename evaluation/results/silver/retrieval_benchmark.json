@@ -1,10 +1,25 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "dataset": {
+    "provenance_schema_version": 1,
     "kind": "silver",
+    "creation_method": "ai_assisted",
+    "final_gold": false,
+    "dataset_release_approved": true,
+    "approved_by": "berksankir",
+    "approval_scope": "dataset_level_with_sample_audit",
+    "all_records_human_reviewed": false,
     "human_reviewed": false,
-    "description": "AI-generated candidate set with automatic answerable span/page integrity checks; automatic validation is not human approval.",
-    "audit_sample_records": 20,
+    "human_reviewed_semantics": "Whether every record in the dataset was reviewed individually by a human; false does not mean that dataset-level release approval is absent.",
+    "automated_grounding_checks": {
+      "answerable_exact_source_span_and_physical_page": true,
+      "counts_as_human_item_review": false
+    },
+    "audit_sample": {
+      "reviewed_records": 20,
+      "total_records": 50,
+      "approved_records": 20
+    },
     "audit_provenance": {
       "decisions_with_provenance": 20,
       "reviewers": [
@@ -17,7 +32,9 @@
       "needs_changes": 0,
       "pending": 0,
       "rejected": 0
-    }
+    },
+    "description_en": "The benchmark uses an AI-assisted silver evaluation set. Its release and use were approved by the project owner after automated grounding checks and a human audit of 20 out of 50 records. The complete dataset was not reviewed item by item and is not presented as a human-reviewed gold set.",
+    "description_tr": "Benchmark, AI destekli bir silver evaluation seti kullanmaktadır. Veri setinin yayımlanmasına ve benchmarkta kullanılmasına, otomatik grounding kontrolleri ve 50 kaydın 20’si üzerinde yapılan insan audit’i sonrasında proje sahibi tarafından onay verilmiştir. Kayıtların tamamı tek tek insan incelemesinden geçmemiştir ve veri seti human-reviewed gold set olarak sunulmamaktadır."
   },
   "protocol": {
     "pipelines": [

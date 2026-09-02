@@ -17,7 +17,19 @@ from turkish_local_rag.config import load_config
 from turkish_local_rag.evaluate import load_silver
 from turkish_local_rag.generation import evaluate_evidence, select_context_hits
 from turkish_local_rag.query import LocalRetrievalRuntime
+from turkish_local_rag.provenance import (
+    build_silver_provenance,
+    provenance_csv_fields,
+    provenance_csv_values,
+    provenance_markdown_lines,
+)
 from turkish_local_rag.retrieve import normalize_turkish
+from turkish_local_rag.review import (
+    load_review,
+    review_provenance_summary,
+    review_status_counts,
+    select_silver_audit_candidates,
+)
 
 
 VARIANTS = (
@@ -32,11 +44,16 @@ def run_tuning(config_path: str | Path, *, overwrite: bool = False) -> dict[str,
     config = load_config(config_path)
     paths = config.resolve_paths(config_path)
     candidates = load_candidates(paths.evaluation_candidates)
+    silver_records = load_silver(paths.evaluation_silver, candidates)
     dev = [
         record
-        for record in load_silver(paths.evaluation_silver, candidates)
+        for record in silver_records
         if record.split == "dev"
     ]
+    audit = load_review(
+        paths.evaluation_silver_audit,
+        select_silver_audit_candidates(candidates),
+    )
     outputs = {
         extension: paths.evaluation_results_directory
         / "silver"
@@ -119,18 +136,22 @@ def run_tuning(config_path: str | Path, *, overwrite: bool = False) -> dict[str,
             row["name"],
         ),
     )[0]
+    dataset_metadata = build_silver_provenance(
+        review_status_counts(audit),
+        review_provenance_summary(audit),
+        total_records=len(silver_records),
+    )
+    dataset_metadata.update({
+        "split": "dev",
+        "records": len(dev),
+        "answerable": sum(record.candidate.answerable for record in dev),
+        "unanswerable": sum(not record.candidate.answerable for record in dev),
+        "test_split_accessed_for_tuning": False,
+    })
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "created_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "dataset": {
-            "kind": "silver",
-            "human_reviewed": False,
-            "split": "dev",
-            "records": len(dev),
-            "answerable": sum(record.candidate.answerable for record in dev),
-            "unanswerable": sum(not record.candidate.answerable for record in dev),
-            "test_split_accessed_for_tuning": False,
-        },
+        "dataset": dataset_metadata,
         "selection_policy": (
             "maximize balanced answerable coverage/correct abstention; then minimize "
             "false abstention; fixed four-variant comparison"
@@ -139,15 +160,22 @@ def run_tuning(config_path: str | Path, *, overwrite: bool = False) -> dict[str,
         "variants": variants,
         "observations": observations,
     }
-    csv_buffer = io.StringIO(newline="")
-    writer = csv.DictWriter(csv_buffer, fieldnames=list(variants[0]))
-    writer.writeheader()
-    writer.writerows(variants)
     markdown = _render_markdown(payload)
     _write_atomic(outputs["json"], json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    _write_atomic(outputs["csv"], csv_buffer.getvalue())
+    _write_atomic(outputs["csv"], _render_csv(payload))
     _write_atomic(outputs["md"], markdown)
     return outputs
+
+
+def _render_csv(payload: Mapping[str, Any]) -> str:
+    variants = payload["variants"]
+    csv_buffer = io.StringIO(newline="")
+    fields = [*provenance_csv_fields(), *variants[0]]
+    writer = csv.DictWriter(csv_buffer, fieldnames=fields)
+    writer.writeheader()
+    provenance_values = provenance_csv_values(payload["dataset"])
+    writer.writerows({**provenance_values, **variant} for variant in variants)
+    return csv_buffer.getvalue()
 
 
 def _render_markdown(payload: Mapping[str, Any]) -> str:
@@ -155,7 +183,8 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     lines = [
         "# Silver dev evidence-gate tuning",
         "",
-        "Bu çalışma yalnız AI-assisted silver `dev` split üzerindedir; `human_reviewed=false`. ",
+        *provenance_markdown_lines(),
+        "Bu çalışma yalnız silver `dev` split üzerindedir.",
         "Test split threshold seçimi sırasında okunmamıştır.",
         "",
         "| Variant | Min coverage | Min RRF | Answerable coverage | Correct abstention | False abstention | Balanced |",

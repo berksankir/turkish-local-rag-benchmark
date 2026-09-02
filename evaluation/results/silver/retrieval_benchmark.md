@@ -1,6 +1,15 @@
 # Silver retrieval benchmark
 
-Bu rapor AI-generated silver evaluation set üzerinde üretilmiştir. Answerable span/page kontrolleri otomatiktir ve insan onayı değildir.
+## Dataset provenance
+
+The benchmark uses an AI-assisted silver evaluation set. Its release and use were approved by the project owner after automated grounding checks and a human audit of 20 out of 50 records. The complete dataset was not reviewed item by item and is not presented as a human-reviewed gold set.
+
+Benchmark, AI destekli bir silver evaluation seti kullanmaktadır. Veri setinin yayımlanmasına ve benchmarkta kullanılmasına, otomatik grounding kontrolleri ve 50 kaydın 20’si üzerinde yapılan insan audit’i sonrasında proje sahibi tarafından onay verilmiştir. Kayıtların tamamı tek tek insan incelemesinden geçmemiştir ve veri seti human-reviewed gold set olarak sunulmamaktadır.
+
+`human_reviewed=false` ve `all_records_human_reviewed=false`, yalnızca 50 kaydın tamamının item-level insan incelemesinden geçmediğini belirtir; dataset-level yayımlama ve benchmark kullanım onayının bulunmadığı anlamına gelmez.
+
+Machine-readable scope: `creation_method=ai_assisted`, `dataset_release_approved=true`, `approved_by=berksankir`, `approval_scope=dataset_level_with_sample_audit`, audit `20/50`, `final_gold=false`.
+
 Human audit durumu: approved=20, needs_changes=0, pending=0, rejected=0.
 Unanswerable kayıtlar retrieval kalite paydalarına alınmamış, latency ölçümüne dahil edilmiştir.
 MRR, ortak top-10 sonuç listesi üzerinde hesaplanmıştır.

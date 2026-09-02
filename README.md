@@ -330,7 +330,18 @@ gerçekten corpus dışı olup olmadığı da insan tarafından incelenmelidir.
 `evaluation/silver.jsonl`, 50 adayın tamamını kimlikleri ve içerikleri değişmeden
 içeren synthetic silver settir. Answerable kayıtların span/page bütünlüğü otomatik
 doğrulanmıştır; unanswerable kayıtların corpus dışı olduğu otomatik olarak kabul
-edilmez. Silver hiçbir yerde human-reviewed veya gold olarak sunulmamalıdır.
+edilmez. Dataset AI-assisted silver'dır ve gold değildir.
+
+The benchmark uses an AI-assisted silver evaluation set. Its release and use were
+approved by the project owner after automated grounding checks and a human audit
+of 20 out of 50 records. The complete dataset was not reviewed item by item and is
+not presented as a human-reviewed gold set.
+
+Benchmark, AI destekli bir silver evaluation seti kullanmaktadır. Veri setinin
+yayımlanmasına ve benchmarkta kullanılmasına, otomatik grounding kontrolleri ve
+50 kaydın 20’si üzerinde yapılan insan audit’i sonrasında proje sahibi tarafından
+onay verilmiştir. Kayıtların tamamı tek tek insan incelemesinden geçmemiştir ve
+veri seti human-reviewed gold set olarak sunulmamaktadır.
 
 İnceleme yükünü azaltan `evaluation/silver_audit.csv`, 10 unanswerable kaydın
 tamamını ve dokuz belgenin her birini temsil edecek şekilde seçilmiş 10 answerable
@@ -339,6 +350,13 @@ verilir; seçim retrieval sonuçlarından türetilmez. Yirmi kaydın tamamı kul
 tarafından kontrol edilmiş ve `berksankir` reviewer kimliğiyle `approved` olarak
 işaretlenmiştir; silver set bu sınırlı anlamda “human-audited sample”dır, ancak
 “human-reviewed gold” değildir.
+
+Dataset-level release kararı `dataset_release_approved=true`, `approved_by=berksankir`
+ve `approval_scope=dataset_level_with_sample_audit` alanlarıyla kaydedilir. Eski
+istemciler için korunan `human_reviewed=false` ile yeni
+`all_records_human_reviewed=false` yalnız “dataset içindeki bütün kayıtlar tek tek
+insan tarafından incelendi mi?” sorusunu yanıtlar; dataset-level onayın bulunmadığı
+anlamına gelmez. Kalan 30 kayda item-level reviewer veya timestamp atanmamıştır.
 
 Tam gold incelemesi için `evaluation/review.csv` içindeki 50 kayıt korunur ve
 başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status`,
@@ -391,8 +409,10 @@ dataset türünü ve audit durumlarını taşır; otomatik doğrulama insan onay
 sunulmaz.
 
 2026-09-02 canonical silver koşusu 50 soru ve dört pipeline üzerinde tamamlanmıştır.
-JSON raporu `kind=\"silver\"`, `human_reviewed=false`, 20 provenance sahibi audit
-kararı (`berksankir`, 20 `approved`) ve 436 chunk bilgisini taşır. Benchmark süresi
+JSON raporu `kind=\"silver\"`, `creation_method=\"ai_assisted\"`,
+`dataset_release_approved=true`, `all_records_human_reviewed=false`, 20 provenance
+sahibi audit kararı (`berksankir`, 20 `approved`) ve 436 chunk bilgisini taşır.
+Benchmark süresi
 232,319 saniye, yaklaşık peak process working set 1.284.526.080 bayttır. Pipeline
 seçimi yalnız sekiz answerable kayıt içeren `dev` split sonuçlarıyla yapılmıştır:
 

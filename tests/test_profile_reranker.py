@@ -7,6 +7,7 @@ from turkish_local_rag.profile_reranker import (
     render_profile_csv,
     render_profile_markdown,
 )
+from turkish_local_rag.provenance import build_silver_provenance
 
 
 DEFAULT_CONFIG = Path("config/default.toml")
@@ -33,8 +34,16 @@ def _payload() -> dict:
             "p95": 170.0,
         },
     }
+    dataset = build_silver_provenance(
+        {"approved": 20, "needs_changes": 0, "pending": 0, "rejected": 0},
+        {
+            "decisions_with_provenance": 20,
+            "reviewers": ["berksankir"],
+            "latest_reviewed_at_utc": "2026-09-02T08:37:55Z",
+        },
+    )
     return {
-        "dataset": {"human_reviewed": False},
+        "dataset": dataset,
         "protocol": {"reranker_instances_created": 1},
         "model_loading_ms": {"embedding_model": 10.0, "reranker_model": 20.0},
         "cold_query_ms": {
@@ -88,8 +97,9 @@ def test_profile_renderers_label_silver_dev_and_runtime_controls() -> None:
     csv_text = render_profile_csv(payload)
     markdown = render_profile_markdown(payload)
 
-    assert "configured_top20_b4_t4,20,4,4" in csv_text
+    assert "dataset_level_with_sample_audit" in csv_text
+    assert "configured_top20_b4_t4" in csv_text
     assert markdown.startswith("# Faz 8.1 reranker profiling — silver dev")
-    assert "human_reviewed=false" in markdown
+    assert "dataset_release_approved=true" in markdown
     assert "test split bu kararda kullanılmamıştır" in markdown
     assert "1 instance" in markdown

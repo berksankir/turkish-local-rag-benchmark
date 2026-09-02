@@ -1,15 +1,24 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "dataset": {
+    "provenance_schema_version": 1,
     "kind": "silver",
+    "creation_method": "ai_assisted",
+    "final_gold": false,
+    "dataset_release_approved": true,
+    "approved_by": "berksankir",
+    "approval_scope": "dataset_level_with_sample_audit",
+    "all_records_human_reviewed": false,
     "human_reviewed": false,
-    "scope": "dev split only",
-    "limitations": "AI-assisted silver candidates; audit sample decisions were made by the user; this is not a gold or fully human-reviewed benchmark.",
-    "audit_statuses": {
-      "approved": 20,
-      "needs_changes": 0,
-      "pending": 0,
-      "rejected": 0
+    "human_reviewed_semantics": "Whether every record in the dataset was reviewed individually by a human; false does not mean that dataset-level release approval is absent.",
+    "automated_grounding_checks": {
+      "answerable_exact_source_span_and_physical_page": true,
+      "counts_as_human_item_review": false
+    },
+    "audit_sample": {
+      "reviewed_records": 20,
+      "total_records": 50,
+      "approved_records": 20
     },
     "audit_provenance": {
       "decisions_with_provenance": 20,
@@ -17,7 +26,16 @@
         "berksankir"
       ],
       "latest_reviewed_at_utc": "2026-09-02T08:37:55Z"
-    }
+    },
+    "audit_statuses": {
+      "approved": 20,
+      "needs_changes": 0,
+      "pending": 0,
+      "rejected": 0
+    },
+    "description_en": "The benchmark uses an AI-assisted silver evaluation set. Its release and use were approved by the project owner after automated grounding checks and a human audit of 20 out of 50 records. The complete dataset was not reviewed item by item and is not presented as a human-reviewed gold set.",
+    "description_tr": "Benchmark, AI destekli bir silver evaluation seti kullanmaktadır. Veri setinin yayımlanmasına ve benchmarkta kullanılmasına, otomatik grounding kontrolleri ve 50 kaydın 20’si üzerinde yapılan insan audit’i sonrasında proje sahibi tarafından onay verilmiştir. Kayıtların tamamı tek tek insan incelemesinden geçmemiştir ve veri seti human-reviewed gold set olarak sunulmamaktadır.",
+    "scope": "dev split only"
   },
   "protocol": {
     "selection_split": "dev",

@@ -1,6 +1,16 @@
 # AI-assisted silver grounded-generation benchmark
 
-Bu sonuç gold veya tamamen human-reviewed değildir. `human_reviewed=false`; yalnız kullanıcı kararlı audit örneği provenance olarak korunur. Test split model, pipeline veya threshold seçimi için kullanılmamıştır. LLM-as-a-judge yoktur.
+## Dataset provenance
+
+The benchmark uses an AI-assisted silver evaluation set. Its release and use were approved by the project owner after automated grounding checks and a human audit of 20 out of 50 records. The complete dataset was not reviewed item by item and is not presented as a human-reviewed gold set.
+
+Benchmark, AI destekli bir silver evaluation seti kullanmaktadır. Veri setinin yayımlanmasına ve benchmarkta kullanılmasına, otomatik grounding kontrolleri ve 50 kaydın 20’si üzerinde yapılan insan audit’i sonrasında proje sahibi tarafından onay verilmiştir. Kayıtların tamamı tek tek insan incelemesinden geçmemiştir ve veri seti human-reviewed gold set olarak sunulmamaktadır.
+
+`human_reviewed=false` ve `all_records_human_reviewed=false`, yalnızca 50 kaydın tamamının item-level insan incelemesinden geçmediğini belirtir; dataset-level yayımlama ve benchmark kullanım onayının bulunmadığı anlamına gelmez.
+
+Machine-readable scope: `creation_method=ai_assisted`, `dataset_release_approved=true`, `approved_by=berksankir`, `approval_scope=dataset_level_with_sample_audit`, audit `20/50`, `final_gold=false`.
+
+Test split model, pipeline veya threshold seçimi için kullanılmamıştır. LLM-as-a-judge yoktur.
 
 | Split | Pipeline | R@1 | R@3 | R@5 | MRR | Citation | Coverage | Correct abstain | False abstain | Token F1 | Key facts | Mean total ms |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|

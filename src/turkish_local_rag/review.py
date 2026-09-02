@@ -584,6 +584,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json.dumps(
                     {
                         "dataset_kind": "silver",
+                        "creation_method": "ai_assisted",
+                        "final_gold": False,
+                        "dataset_release_approved": True,
+                        "approved_by": "berksankir",
+                        "approval_scope": "dataset_level_with_sample_audit",
+                        "all_records_human_reviewed": False,
                         "human_reviewed": False,
                         "path": str(output),
                         "records": count,

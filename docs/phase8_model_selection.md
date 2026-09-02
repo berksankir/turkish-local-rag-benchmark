@@ -86,5 +86,7 @@ için kapatılacak düşünme modu yoktur.
 
 1 GB üzerindeki GGUF için açık kullanıcı onayı alınmış; seçilen tek model ve runtime
 indirilerek hash'leri doğrulanmıştır. Model/runtime Git-ignore kapsamında kalır.
-Generation sonuçları AI-assisted silver'dır, `human_reviewed=false` bilgisini taşır
-ve gold ya da tamamen human-reviewed benchmark olarak yorumlanamaz.
+Generation sonuçları AI-assisted silver'dır. Dataset release ve benchmark kullanım
+onayı proje sahibi tarafından verilmiştir; bu onay 20/50 item-level audit'e dayanır.
+`all_records_human_reviewed=false` kalan 30 kaydın tek tek incelenmediğini belirtir;
+dataset gold ya da tamamen human-reviewed benchmark olarak yorumlanamaz.

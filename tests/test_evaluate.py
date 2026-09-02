@@ -161,7 +161,7 @@ def test_aggregate_reports_each_pipeline_and_split() -> None:
     assert summary["all"]["bm25"]["average_retrieval_latency_ms"] == 2.0
 
 
-def test_silver_report_is_explicitly_not_human_approved() -> None:
+def test_silver_report_distinguishes_dataset_approval_from_item_review() -> None:
     summary = {
         split: {
             pipeline: {
@@ -181,9 +181,9 @@ def test_silver_report_is_explicitly_not_human_approved() -> None:
         "dataset": {
             "kind": "silver",
             "audit_statuses": {
-                "approved": 0,
+                "approved": 20,
                 "needs_changes": 0,
-                "pending": 20,
+                "pending": 0,
                 "rejected": 0,
             },
         },
@@ -203,8 +203,9 @@ def test_silver_report_is_explicitly_not_human_approved() -> None:
     rendered = _render_markdown(payload)
 
     assert rendered.startswith("# Silver retrieval benchmark")
-    assert "insan onayı değildir" in rendered
-    assert "pending=20" in rendered
+    assert "dataset_release_approved=true" in rendered
+    assert "tamamının item-level insan incelemesinden geçmediğini" in rendered
+    assert "approved=20" in rendered
     assert "insan onaylı gold" not in rendered
 
 

@@ -27,6 +27,12 @@ from turkish_local_rag.evaluate import (
     load_silver,
     score_retrieval,
 )
+from turkish_local_rag.provenance import (
+    build_silver_provenance,
+    provenance_csv_fields,
+    provenance_csv_values,
+    provenance_markdown_lines,
+)
 from turkish_local_rag.retrieve import (
     BM25Retriever,
     FusedHit,
@@ -290,19 +296,15 @@ def run_profile(
 
     current_rss, peak_rss = _process_memory_bytes()
     finished_at = datetime.now(timezone.utc)
+    dataset_metadata = build_silver_provenance(
+        review_status_counts(audit_records),
+        review_provenance_summary(audit_records),
+        total_records=len(evaluation_records),
+    )
+    dataset_metadata["scope"] = "dev split only"
     payload = {
-        "schema_version": 1,
-        "dataset": {
-            "kind": "silver",
-            "human_reviewed": False,
-            "scope": "dev split only",
-            "limitations": (
-                "AI-assisted silver candidates; audit sample decisions were made by "
-                "the user; this is not a gold or fully human-reviewed benchmark."
-            ),
-            "audit_statuses": review_status_counts(audit_records),
-            "audit_provenance": review_provenance_summary(audit_records),
-        },
+        "schema_version": 2,
+        "dataset": dataset_metadata,
         "protocol": {
             "selection_split": "dev",
             "test_split_accessed_for_tuning": False,
@@ -418,7 +420,7 @@ def _latency_summary(values: Sequence[float]) -> dict[str, float]:
 
 
 def render_profile_csv(payload: Mapping[str, Any]) -> str:
-    fields = (
+    fields = provenance_csv_fields() + (
         "variant_id",
         "rerank_top_n",
         "batch_size",
@@ -443,6 +445,7 @@ def render_profile_csv(payload: Mapping[str, Any]) -> str:
         latency = variant["latency_ms"]
         writer.writerow(
             {
+                **provenance_csv_values(payload["dataset"]),
                 "variant_id": variant["variant_id"],
                 "rerank_top_n": variant["rerank_top_n"],
                 "batch_size": variant["batch_size"],
@@ -466,20 +469,14 @@ def render_profile_csv(payload: Mapping[str, Any]) -> str:
 
 
 def render_profile_markdown(payload: Mapping[str, Any]) -> str:
-    dataset = payload["dataset"]
     protocol = payload["protocol"]
     rrf = payload["hybrid_rrf_quality"]
     lines = [
         "# Faz 8.1 reranker profiling — silver dev",
         "",
-        (
-            "Bu profiling AI-assisted silver benchmark'ın yalnız `dev` split'i "
-            "üzerinde çalıştırılmıştır; gold veya tamamen human-reviewed değildir."
-        ),
-        (
-            f"`human_reviewed={str(dataset['human_reviewed']).lower()}`; test split "
-            "ayar seçimi için okunmamıştır."
-        ),
+        *provenance_markdown_lines(),
+        "Bu profiling yalnız `dev` split üzerinde çalıştırılmış; test split ayar "
+        "seçimi için okunmamıştır.",
         (
             "Reranker model instance'ı bir kez yüklenmiş ve tüm sorgular ile "
             f"varyantlarda tekrar kullanılmıştır: {protocol['reranker_instances_created']} instance."

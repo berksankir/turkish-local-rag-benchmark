@@ -1,5 +1,5 @@
-name,minimum_query_coverage,minimum_rrf_score,answerable_coverage,false_abstention_rate,correct_abstention_rate,balanced_gate_accuracy
-coverage_020_score_020,0.2,0.02,1.0,0.0,0.0,0.5
-coverage_030_score_020,0.3,0.02,1.0,0.0,0.5,0.75
-coverage_040_score_020,0.4,0.02,1.0,0.0,1.0,1.0
-coverage_030_score_024,0.3,0.024,1.0,0.0,0.5,0.75
+provenance_schema_version,dataset_kind,creation_method,final_gold,dataset_release_approved,approved_by,approval_scope,all_records_human_reviewed,human_reviewed,audit_reviewed_records,audit_total_records,audit_approved_records,name,minimum_query_coverage,minimum_rrf_score,answerable_coverage,false_abstention_rate,correct_abstention_rate,balanced_gate_accuracy
+1,silver,ai_assisted,false,true,berksankir,dataset_level_with_sample_audit,false,false,20,50,20,coverage_020_score_020,0.2,0.02,1.0,0.0,0.0,0.5
+1,silver,ai_assisted,false,true,berksankir,dataset_level_with_sample_audit,false,false,20,50,20,coverage_030_score_020,0.3,0.02,1.0,0.0,0.5,0.75
+1,silver,ai_assisted,false,true,berksankir,dataset_level_with_sample_audit,false,false,20,50,20,coverage_040_score_020,0.4,0.02,1.0,0.0,1.0,1.0
+1,silver,ai_assisted,false,true,berksankir,dataset_level_with_sample_audit,false,false,20,50,20,coverage_030_score_024,0.3,0.024,1.0,0.0,0.5,0.75

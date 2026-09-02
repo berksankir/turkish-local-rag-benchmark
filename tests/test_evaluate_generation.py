@@ -99,7 +99,13 @@ def test_committed_generation_benchmark_is_self_describing_silver() -> None:
         )
     )
 
+    assert report["schema_version"] == 2
     assert report["dataset"]["kind"] == "silver"
+    assert report["dataset"]["creation_method"] == "ai_assisted"
+    assert report["dataset"]["dataset_release_approved"] is True
+    assert report["dataset"]["approved_by"] == "berksankir"
+    assert report["dataset"]["approval_scope"] == "dataset_level_with_sample_audit"
+    assert report["dataset"]["all_records_human_reviewed"] is False
     assert report["dataset"]["human_reviewed"] is False
     assert report["protocol"]["test_used_for_model_or_threshold_selection"] is False
     assert report["protocol"]["llm_as_a_judge"] is False
@@ -133,6 +139,7 @@ def test_generation_markdown_reports_separated_latency_and_limitations() -> None
     )
 
     assert "`human_reviewed=false`" in report
+    assert "`dataset_release_approved=true`" in report
     assert "Test split model, pipeline veya threshold seçimi için kullanılmamıştır" in report
     for stage in ("retrieval", "reranking", "generation", "total"):
         assert f"| hybrid_rrf | {stage} |" in report
