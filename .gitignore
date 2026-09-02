@@ -16,6 +16,7 @@ data/downloads/
 artifacts/
 indexes/
 models/
+runtime/
 .cache/
 
 # Editors and operating systems

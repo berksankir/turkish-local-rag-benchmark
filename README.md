@@ -248,6 +248,20 @@ MRR'ı 0,0554 düşürmüştür. Bu nedenle hızlı varsayılan `hybrid_rrf` ola
 reranker yalnız opsiyonel kalite/karşılaştırma modudur. Ayrıntılı JSON, CSV ve
 Markdown profilleri `evaluation/results/silver/reranker_profile.*` dosyalarındadır.
 
+## Faz 8 yerel üretici model seçimi
+
+Resmî Qwen2.5 1.5B Q4_K_M, Qwen3 1.7B Q8_0 ve Gemma 3 1B seçenekleri Windows,
+8 GB RAM ve CPU-only hedefi için karşılaştırılmıştır. Qwen2.5'in resmî Q4_K_M
+dosyası; 1,12 GB boyutu, Apache-2.0 lisansı, model kartındaki instruction/JSON
+desteği ve sabit dosya SHA-256 değeri nedeniyle seçilmiştir. Model kartının örnek
+dil listesi Türkçe'yi açıkça saymadığından Türkçe kalitesi gerçek yerel test
+öncesinde doğrulanmış kabul edilmez.
+
+Model ve runtime henüz indirilmemiştir. 1 GB üzerindeki indirme için kullanıcı
+onayı beklenmektedir. Karşılaştırma, sabit revision, dosya hash'i, RAM/hız tahmini
+ve kaynaklar `docs/phase8_model_selection.md` içinde kayıtlıdır. Model ağırlıkları
+`models/`, yerel runtime dosyaları `runtime/` altında tutulacak ve Git'e eklenmeyecektir.
+
 ## Evaluation adayları
 
 `evaluation/candidates.jsonl`, değiştirilmeden korunan 40 cevaplanabilir ve 10
