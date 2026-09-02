@@ -11,7 +11,9 @@ from urllib.error import HTTPError
 import pytest
 
 from turkish_local_rag.config import DownloaderConfig, ResolvedPaths
+from turkish_local_rag.corpus_lock import CorpusLockRecord
 from turkish_local_rag.download import (
+    CorpusLockMismatchError,
     ExistingFileChangedError,
     HTTPDownloadError,
     PDFValidationError,
@@ -71,6 +73,7 @@ def _paths(tmp_path: Path) -> ResolvedPaths:
     return ResolvedPaths(
         project_root=tmp_path,
         source_manifest=tmp_path / "manifest.json",
+        corpus_lock=tmp_path / "corpus.lock.json",
         pdf_directory=tmp_path / "pdfs",
         metadata_directory=tmp_path / "metadata",
         extracted_pages_directory=tmp_path / "extracted",
@@ -276,3 +279,28 @@ def test_existing_identical_file_is_reported_unchanged(tmp_path: Path) -> None:
     assert result.status == "unchanged"
     assert target.read_bytes() == PDF_BYTES
     assert result.metadata_path.exists()
+
+
+def test_download_refuses_bytes_that_differ_from_corpus_lock(tmp_path: Path) -> None:
+    paths = _paths(tmp_path)
+    lock_record = CorpusLockRecord(
+        document_id=SOURCE.id,
+        title=SOURCE.title,
+        source_page_url=SOURCE.source_page_url,
+        pdf_url=SOURCE.pdf_url,
+        final_pdf_url=SOURCE.pdf_url,
+        downloaded_at_utc="2026-09-01T12:30:00Z",
+        size_bytes=len(PDF_BYTES),
+        sha256="0" * 64,
+    )
+
+    with pytest.raises(CorpusLockMismatchError, match="committed corpus lock"):
+        download_document(
+            SOURCE,
+            paths,
+            SETTINGS,
+            opener=_opener(FakeResponse(PDF_BYTES)),
+            lock_record=lock_record,
+        )
+
+    assert not (paths.pdf_directory / "test-document.pdf").exists()

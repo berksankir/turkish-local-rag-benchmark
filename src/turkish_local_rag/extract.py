@@ -150,6 +150,13 @@ def run_extractions(
     config = load_config(config_path)
     paths = config.resolve_paths(config_path)
     sources = load_manifest(paths.source_manifest)
+    if paths.corpus_lock.exists():
+        from turkish_local_rag.corpus_lock import CorpusLockError, verify_corpus_lock
+
+        try:
+            verify_corpus_lock(paths)
+        except CorpusLockError as exc:
+            raise ExtractionError(str(exc)) from exc
     selected_ids = set(source_ids or ())
     known_ids = {source.id for source in sources}
     unknown_ids = selected_ids - known_ids

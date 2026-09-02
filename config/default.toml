@@ -3,6 +3,7 @@ schema_version = 1
 [paths]
 project_root = ".."
 source_manifest = "data/manifest.json"
+corpus_lock = "data/corpus.lock.json"
 pdf_directory = "data/pdfs"
 metadata_directory = "data/downloads"
 extracted_pages_directory = "artifacts/extracted"
@@ -82,6 +83,7 @@ model_sha256 = "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e
 model_size_bytes = 1117320736
 runtime_version = "b10621"
 runtime_sha256 = "0e8b65e650e369f70f8307d890508886f171ef4fb00facccddd4a1b7ffdaca51"
+runtime_size_bytes = 18068018
 context_window_tokens = 2560
 max_output_tokens = 160
 timeout_seconds = 120

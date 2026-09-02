@@ -16,6 +16,7 @@ class ConfigError(ValueError):
 class ResolvedPaths:
     project_root: Path
     source_manifest: Path
+    corpus_lock: Path
     pdf_directory: Path
     metadata_directory: Path
     extracted_pages_directory: Path
@@ -37,6 +38,7 @@ class ResolvedPaths:
 class PathsConfig:
     project_root: str
     source_manifest: str
+    corpus_lock: str
     pdf_directory: str
     metadata_directory: str
     extracted_pages_directory: str
@@ -57,6 +59,7 @@ class PathsConfig:
         for name, value in (
             ("project_root", self.project_root),
             ("source_manifest", self.source_manifest),
+            ("corpus_lock", self.corpus_lock),
             ("pdf_directory", self.pdf_directory),
             ("metadata_directory", self.metadata_directory),
             ("extracted_pages_directory", self.extracted_pages_directory),
@@ -88,6 +91,9 @@ class PathsConfig:
             project_root=project_root,
             source_manifest=_resolve_within_project(
                 project_root, self.source_manifest, "paths.source_manifest"
+            ),
+            corpus_lock=_resolve_within_project(
+                project_root, self.corpus_lock, "paths.corpus_lock"
             ),
             pdf_directory=_resolve_within_project(
                 project_root, self.pdf_directory, "paths.pdf_directory"
@@ -348,6 +354,7 @@ class GeneratorConfig:
     model_size_bytes: int
     runtime_version: str
     runtime_sha256: str
+    runtime_size_bytes: int
     context_window_tokens: int
     max_output_tokens: int
     timeout_seconds: int
@@ -381,6 +388,8 @@ class GeneratorConfig:
                 raise ConfigError(f"generation.{name} must be lowercase SHA-256")
         if self.model_size_bytes <= 0:
             raise ConfigError("generation.model_size_bytes must be positive")
+        if self.runtime_size_bytes <= 0:
+            raise ConfigError("generation.runtime_size_bytes must be positive")
         if not 2048 <= self.context_window_tokens <= 3072:
             raise ConfigError(
                 "generation.context_window_tokens must be between 2048 and 3072"
@@ -495,6 +504,7 @@ def load_config(path: str | Path) -> ProjectConfig:
         {
             "project_root",
             "source_manifest",
+            "corpus_lock",
             "pdf_directory",
             "metadata_directory",
             "extracted_pages_directory",
@@ -586,6 +596,7 @@ def load_config(path: str | Path) -> ProjectConfig:
             "model_size_bytes",
             "runtime_version",
             "runtime_sha256",
+            "runtime_size_bytes",
             "context_window_tokens",
             "max_output_tokens",
             "timeout_seconds",
@@ -611,6 +622,7 @@ def load_config(path: str | Path) -> ProjectConfig:
         paths=PathsConfig(
             project_root=_string(paths, "project_root", "paths"),
             source_manifest=_string(paths, "source_manifest", "paths"),
+            corpus_lock=_string(paths, "corpus_lock", "paths"),
             pdf_directory=_string(paths, "pdf_directory", "paths"),
             metadata_directory=_string(paths, "metadata_directory", "paths"),
             extracted_pages_directory=_string(
@@ -728,6 +740,9 @@ def load_config(path: str | Path) -> ProjectConfig:
             model_size_bytes=_integer(generation, "model_size_bytes", "generation"),
             runtime_version=_string(generation, "runtime_version", "generation"),
             runtime_sha256=_string(generation, "runtime_sha256", "generation"),
+            runtime_size_bytes=_integer(
+                generation, "runtime_size_bytes", "generation"
+            ),
             context_window_tokens=_integer(
                 generation, "context_window_tokens", "generation"
             ),

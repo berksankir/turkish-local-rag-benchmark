@@ -65,6 +65,10 @@ class ExistingFileChangedError(DownloadError):
         )
 
 
+class CorpusLockMismatchError(DownloadError):
+    """Raised when downloaded bytes differ from the committed corpus lock."""
+
+
 @dataclass(frozen=True, slots=True)
 class SourceDocument:
     id: str
@@ -142,6 +146,7 @@ def download_document(
     *,
     opener: Callable[..., Any] = urlopen,
     now: Callable[[], datetime] | None = None,
+    lock_record: Any | None = None,
 ) -> DownloadResult:
     """Download one PDF atomically and refuse silent replacement on hash changes."""
 
@@ -218,6 +223,19 @@ def download_document(
                 )
 
         downloaded_sha256 = digest.hexdigest()
+        if lock_record is not None and (
+            lock_record.document_id != source.id
+            or lock_record.title != source.title
+            or lock_record.source_page_url != source.source_page_url
+            or lock_record.pdf_url != source.pdf_url
+            or lock_record.final_pdf_url != final_url
+            or lock_record.size_bytes != size_bytes
+            or lock_record.sha256 != downloaded_sha256
+        ):
+            raise CorpusLockMismatchError(
+                f"download differs from committed corpus lock for {source.id}; "
+                "lock and existing PDF were not replaced"
+            )
         status = "downloaded"
         if target_path.exists():
             existing_sha256 = sha256_file(target_path, settings.chunk_size_bytes)
@@ -231,13 +249,18 @@ def download_document(
             temporary_path = None
 
         timestamp = (now or _utc_now)().astimezone(timezone.utc)
+        downloaded_at_utc = (
+            lock_record.downloaded_at_utc
+            if lock_record is not None
+            else timestamp.isoformat().replace("+00:00", "Z")
+        )
         metadata = DownloadMetadata(
             id=source.id,
             title=source.title,
             source_page_url=source.source_page_url,
             pdf_url=source.pdf_url,
             final_url=final_url,
-            downloaded_at_utc=timestamp.isoformat().replace("+00:00", "Z"),
+            downloaded_at_utc=downloaded_at_utc,
             size_bytes=size_bytes,
             sha256=downloaded_sha256,
             content_type=content_type,
@@ -281,6 +304,20 @@ def run_downloads(
     config = load_config(config_path)
     paths = config.resolve_paths(config_path)
     sources = load_manifest(paths.source_manifest)
+    lock_by_id: dict[str, Any] = {}
+    if paths.corpus_lock.exists():
+        from turkish_local_rag.corpus_lock import (
+            CorpusLockError,
+            verify_corpus_lock,
+        )
+
+        try:
+            lock_by_id = {
+                record.document_id: record
+                for record in verify_corpus_lock(paths, require_local_files=False)
+            }
+        except CorpusLockError as exc:
+            raise ManifestError(str(exc)) from exc
     selected_ids = set(source_ids or ())
     known_ids = {source.id for source in sources}
     unknown_ids = selected_ids - known_ids
@@ -294,7 +331,13 @@ def run_downloads(
             continue
         try:
             results.append(
-                download_document(source, paths, config.downloader, opener=opener)
+                download_document(
+                    source,
+                    paths,
+                    config.downloader,
+                    opener=opener,
+                    lock_record=lock_by_id.get(source.id),
+                )
             )
         except DownloadError as exc:
             errors.append(exc)

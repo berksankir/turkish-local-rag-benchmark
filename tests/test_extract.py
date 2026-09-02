@@ -31,6 +31,7 @@ def _paths(tmp_path: Path) -> ResolvedPaths:
     return ResolvedPaths(
         project_root=tmp_path,
         source_manifest=tmp_path / "manifest.json",
+        corpus_lock=tmp_path / "corpus.lock.json",
         pdf_directory=tmp_path / "pdfs",
         metadata_directory=tmp_path / "metadata",
         extracted_pages_directory=tmp_path / "extracted",

@@ -13,6 +13,7 @@ def test_default_config_is_valid() -> None:
 
     assert config.schema_version == 1
     assert config.paths.source_manifest == "data/manifest.json"
+    assert config.paths.corpus_lock == "data/corpus.lock.json"
     assert config.downloader.timeout_seconds == 30
     assert config.extraction.sort_blocks is True
     assert config.extraction.include_empty_pages is False
@@ -28,6 +29,7 @@ def test_default_config_is_valid() -> None:
     assert config.reranker.batch_size == 4
     assert config.reranker.cpu_threads == 4
     assert config.generation.model_size_bytes == 1117320736
+    assert config.generation.runtime_size_bytes == 18068018
     assert config.generation.context_window_tokens == 2560
     assert config.evidence.context_top_k == 3
 
@@ -38,6 +40,7 @@ def test_paths_are_resolved_from_config_location() -> None:
 
     assert paths.project_root == Path.cwd().resolve()
     assert paths.source_manifest == Path("data/manifest.json").resolve()
+    assert paths.corpus_lock == Path("data/corpus.lock.json").resolve()
     assert paths.pdf_directory == Path("data/pdfs").resolve()
     assert paths.extracted_pages_directory == Path("artifacts/extracted").resolve()
     assert paths.chunks_directory == Path("artifacts/chunks").resolve()

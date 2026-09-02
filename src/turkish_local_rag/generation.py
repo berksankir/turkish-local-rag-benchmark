@@ -630,6 +630,7 @@ class LlamaCppServerGenerator:
             "quantization": "Q4_K_M",
             "runtime": f"llama.cpp-{self.settings.runtime_version}",
             "runtime_sha256": self.settings.runtime_sha256,
+            "runtime_size_bytes": self.settings.runtime_size_bytes,
             "context_window_tokens": self.settings.context_window_tokens,
             "max_output_tokens": self.settings.max_output_tokens,
             "seed": self.settings.seed,
