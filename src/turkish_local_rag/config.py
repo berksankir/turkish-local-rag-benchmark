@@ -289,8 +289,9 @@ class RerankerConfig:
     model_sha256: str
     max_sequence_length: int
     batch_size: int
-    candidate_count: int
+    rerank_top_n: int
     top_k: int
+    cpu_threads: int
     zero_shot_turkish: bool
 
     def validate(self) -> None:
@@ -310,12 +311,14 @@ class RerankerConfig:
             )
         if self.batch_size <= 0:
             raise ConfigError("retrieval.reranker.batch_size must be positive")
-        if self.candidate_count <= 0:
-            raise ConfigError("retrieval.reranker.candidate_count must be positive")
-        if not 1 <= self.top_k <= self.candidate_count:
+        if self.rerank_top_n <= 0:
+            raise ConfigError("retrieval.reranker.rerank_top_n must be positive")
+        if not 1 <= self.top_k <= self.rerank_top_n:
             raise ConfigError(
-                "retrieval.reranker.top_k must be between 1 and candidate_count"
+                "retrieval.reranker.top_k must be between 1 and rerank_top_n"
             )
+        if self.cpu_threads <= 0:
+            raise ConfigError("retrieval.reranker.cpu_threads must be positive")
         if not self.zero_shot_turkish:
             raise ConfigError(
                 "retrieval.reranker.zero_shot_turkish must remain true for this model"
@@ -461,8 +464,9 @@ def load_config(path: str | Path) -> ProjectConfig:
             "model_sha256",
             "max_sequence_length",
             "batch_size",
-            "candidate_count",
+            "rerank_top_n",
             "top_k",
+            "cpu_threads",
             "zero_shot_turkish",
         },
         "retrieval.reranker",
@@ -569,10 +573,11 @@ def load_config(path: str | Path) -> ProjectConfig:
                 reranker, "max_sequence_length", "retrieval.reranker"
             ),
             batch_size=_integer(reranker, "batch_size", "retrieval.reranker"),
-            candidate_count=_integer(
-                reranker, "candidate_count", "retrieval.reranker"
+            rerank_top_n=_integer(
+                reranker, "rerank_top_n", "retrieval.reranker"
             ),
             top_k=_integer(reranker, "top_k", "retrieval.reranker"),
+            cpu_threads=_integer(reranker, "cpu_threads", "retrieval.reranker"),
             zero_shot_turkish=_boolean(
                 reranker, "zero_shot_turkish", "retrieval.reranker"
             ),

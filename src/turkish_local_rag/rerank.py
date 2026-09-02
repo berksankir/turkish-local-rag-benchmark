@@ -15,6 +15,7 @@ from huggingface_hub import snapshot_download
 import numpy as np
 from numpy.typing import NDArray
 from sentence_transformers import CrossEncoder
+import torch
 from torch.nn import Identity
 
 from turkish_local_rag.config import RerankerConfig
@@ -92,10 +93,14 @@ class CrossEncoderReranker:
         settings: RerankerConfig,
         *,
         model_factory: Callable[..., Any] = CrossEncoder,
+        thread_setter: Callable[[int], None] = torch.set_num_threads,
     ) -> None:
         verify_reranker_model(model_directory, settings)
         self._settings = settings
         self._activation = Identity()
+        self._thread_setter = thread_setter
+        self._cpu_threads: int | None = None
+        self._set_cpu_threads(settings.cpu_threads)
         self._model = model_factory(
             str(Path(model_directory)),
             device="cpu",
@@ -106,14 +111,35 @@ class CrossEncoderReranker:
         )
 
     def score(self, question: str, passages: Sequence[str]) -> NDArray[np.float32]:
+        return self.score_with_options(question, passages)
+
+    def score_with_options(
+        self,
+        question: str,
+        passages: Sequence[str],
+        *,
+        batch_size: int | None = None,
+        cpu_threads: int | None = None,
+    ) -> NDArray[np.float32]:
+        """Score with bounded runtime overrides while reusing the loaded model."""
+
         if not question.strip():
             raise RerankerError("reranker question cannot be empty")
         if not passages:
             return np.empty((0,), dtype=np.float32)
+        effective_batch_size = self._settings.batch_size if batch_size is None else batch_size
+        effective_cpu_threads = (
+            self._settings.cpu_threads if cpu_threads is None else cpu_threads
+        )
+        if effective_batch_size <= 0:
+            raise RerankerError("reranker batch_size must be positive")
+        if effective_cpu_threads <= 0:
+            raise RerankerError("reranker cpu_threads must be positive")
+        self._set_cpu_threads(effective_cpu_threads)
         pairs = [(question, passage) for passage in passages]
         scores = self._model.predict(
             pairs,
-            batch_size=self._settings.batch_size,
+            batch_size=effective_batch_size,
             show_progress_bar=False,
             activation_fn=self._activation,
             apply_softmax=False,
@@ -129,6 +155,12 @@ class CrossEncoderReranker:
         if not np.all(np.isfinite(array)):
             raise RerankerError("reranker returned a non-finite score")
         return array
+
+    def _set_cpu_threads(self, cpu_threads: int) -> None:
+        if self._cpu_threads == cpu_threads:
+            return
+        self._thread_setter(cpu_threads)
+        self._cpu_threads = cpu_threads
 
 
 def rerank_hits(
@@ -165,7 +197,11 @@ def rerank_hits(
     )[:limit]
     results: list[RerankedHit] = []
     for rank, (candidate, score) in enumerate(ordered, start=1):
-        if isinstance(candidate, FusedHit):
+        # ``python -m turkish_local_rag.retrieve`` executes the retriever as
+        # ``__main__`` while this module imports its canonical package name.
+        # Attribute-based recognition avoids treating that equivalent FusedHit
+        # class as a plain RetrievalHit solely because the module identities differ.
+        if hasattr(candidate, "rrf_score") and hasattr(candidate, "component_ranks"):
             original_retriever = "rrf"
             retrieval_score = candidate.rrf_score
             component_ranks = candidate.component_ranks

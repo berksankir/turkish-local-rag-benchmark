@@ -24,7 +24,9 @@ def test_default_config_is_valid() -> None:
     assert config.bm25.top_k == 20
     assert config.dense.vector_size == 384
     assert config.dense.query_prefix == "query: "
-    assert config.reranker.candidate_count == 20
+    assert config.reranker.rerank_top_n == 20
+    assert config.reranker.batch_size == 4
+    assert config.reranker.cpu_threads == 4
 
 
 def test_paths_are_resolved_from_config_location() -> None:
@@ -87,4 +89,15 @@ def test_token_limits_are_validated(tmp_path: Path) -> None:
     config_path.write_text(changed, encoding="utf-8")
 
     with pytest.raises(ConfigError, match="maximum_model_tokens"):
+        load_config(config_path)
+
+
+def test_reranker_runtime_controls_are_validated(tmp_path: Path) -> None:
+    changed = DEFAULT_CONFIG.read_text(encoding="utf-8").replace(
+        "cpu_threads = 4", "cpu_threads = 0"
+    )
+    config_path = tmp_path / "invalid.toml"
+    config_path.write_text(changed, encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="cpu_threads must be positive"):
         load_config(config_path)

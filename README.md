@@ -225,6 +225,29 @@ bulunmadığından bu bileşen açıkça zero-shot deneydir. Fayda sağladığı
 varsayılmaz. Silver değerlendirme yalnız provisional teknik karşılaştırma sağlar;
 nihai karar gerçek kullanıcı onayından geçen gold değerlendirmeye bırakılır.
 
+Rerank edilecek aday sayısı `rerank_top_n`, inference batch büyüklüğü `batch_size`
+ve PyTorch CPU thread sayısı `cpu_threads` olarak config'te tutulur. Model instance'ı
+sorgular arasında yeniden kullanılır. Varsayılan hızlı mod `hybrid_rrf`, daha yüksek
+latency kabul edildiğinde kullanılabilen opsiyonel mod `hybrid_reranked`tır.
+
+```powershell
+.\.venv\Scripts\python.exe -m turkish_local_rag.profile_reranker --config config\default.toml
+```
+
+2026-09-02 tarihli Faz 8.1 profili yalnız silver `dev` split üzerinde, top‑20/top‑10,
+batch 4/2 ve CPU thread 4/2 için dört küçük varyantla çalıştırılmıştır. Test split
+profiling veya ayar seçimi için kullanılmamıştır. Embedding modeli 3.912,677 ms,
+reranker 3.595,617 ms'de yüklenmiş; cold `hybrid_rrf` 327,723 ms, cold yalnız
+reranking 1.803,151 ms ölçülmüştür. Warm `hybrid_rrf` ortalaması 23,849 ms iken
+configured top‑20 reranking-only ortalaması 963,489 ms ve toplamı 1.017,725 ms'dir.
+Tek reranker instance'ı tüm sorgu ve varyantlarda yeniden kullanılmıştır. Peak
+process working set yaklaşık 1.368.723.456 bayttır.
+
+Dev kalitesinde reranking, R@5 ve Doc@1'i 0,125 artırırken R@1 ve Page@1'i 0,125,
+MRR'ı 0,0554 düşürmüştür. Bu nedenle hızlı varsayılan `hybrid_rrf` olarak kalır;
+reranker yalnız opsiyonel kalite/karşılaştırma modudur. Ayrıntılı JSON, CSV ve
+Markdown profilleri `evaluation/results/silver/reranker_profile.*` dosyalarındadır.
+
 ## Evaluation adayları
 
 `evaluation/candidates.jsonl`, değiştirilmeden korunan 40 cevaplanabilir ve 10

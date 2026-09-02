@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any, Sequence
+from types import SimpleNamespace
 
 import numpy as np
 from numpy.typing import NDArray
@@ -28,8 +29,9 @@ def _settings(weights_sha256: str) -> RerankerConfig:
         model_sha256=weights_sha256,
         max_sequence_length=64,
         batch_size=2,
-        candidate_count=3,
+        rerank_top_n=3,
         top_k=2,
+        cpu_threads=1,
         zero_shot_turkish=True,
     )
 
@@ -121,7 +123,10 @@ def test_cross_encoder_is_cpu_local_only_and_uses_raw_logits(tmp_path: Path) -> 
         return fake_model
 
     scorer = CrossEncoderReranker(
-        model_directory, _settings(weights_hash), model_factory=factory
+        model_directory,
+        _settings(weights_hash),
+        model_factory=factory,
+        thread_setter=lambda _: None,
     )
     scores = scorer.score("Burs koşulları nedir?", ["Burs başvurusu", "İhale usulü"])
 
@@ -157,10 +162,41 @@ def test_cross_encoder_rejects_manifest_revision_before_model_load(
 
     with pytest.raises(RerankerError, match="manifest mismatch for revision"):
         CrossEncoderReranker(
-            model_directory, _settings(weights_hash), model_factory=factory
+            model_directory,
+            _settings(weights_hash),
+            model_factory=factory,
+            thread_setter=lambda _: None,
         )
 
     assert factory_called is False
+
+
+def test_cross_encoder_reuses_one_model_and_applies_runtime_controls(
+    tmp_path: Path,
+) -> None:
+    model_directory, weights_hash = _model_directory(tmp_path)
+    fake_model = FakeCrossEncoder()
+    factory_calls = 0
+    thread_calls: list[int] = []
+
+    def factory(path: str, **kwargs: Any) -> FakeCrossEncoder:
+        nonlocal factory_calls
+        factory_calls += 1
+        return fake_model
+
+    scorer = CrossEncoderReranker(
+        model_directory,
+        _settings(weights_hash),
+        model_factory=factory,
+        thread_setter=thread_calls.append,
+    )
+    scorer.score_with_options("Soru", ["Bir"], batch_size=1, cpu_threads=2)
+    scorer.score_with_options("Soru", ["İki"], batch_size=2, cpu_threads=2)
+
+    assert factory_calls == 1
+    assert len(fake_model.predict_calls) == 2
+    assert [call[1]["batch_size"] for call in fake_model.predict_calls] == [1, 2]
+    assert thread_calls == [1, 2]
 
 
 def test_reranker_reorders_bounded_candidates_and_preserves_metadata() -> None:
@@ -178,6 +214,22 @@ def test_reranker_reorders_bounded_candidates_and_preserves_metadata() -> None:
     assert hits[0].chunk.page_number == 3
     assert hits[0].chunk.source_page_url == "https://example.test/source"
     assert len(scorer.calls[0][1]) == 3
+
+
+def test_reranker_accepts_equivalent_fused_hit_from_module_entrypoint() -> None:
+    chunk = _chunk(0, "Burs başvurusu", 3)
+    entrypoint_hit = SimpleNamespace(
+        rank=1,
+        rrf_score=0.03,
+        component_ranks={"bm25": 1, "dense": 2},
+        chunk=chunk,
+    )
+
+    hits = rerank_hits("Burs", [entrypoint_hit], FakeScorer([0.9]), limit=1)
+
+    assert hits[0].original_retriever == "rrf"
+    assert hits[0].retrieval_score == 0.03
+    assert hits[0].component_ranks == {"bm25": 1, "dense": 2}
 
 
 def test_reranker_rejects_non_finite_scores() -> None:

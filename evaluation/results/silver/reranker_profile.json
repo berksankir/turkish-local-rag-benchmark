@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "dataset": {
+    "kind": "silver",
+    "human_reviewed": false,
+    "scope": "dev split only",
+    "limitations": "AI-assisted silver candidates; audit sample decisions were made by the user; this is not a gold or fully human-reviewed benchmark.",
+    "audit_statuses": {
+      "approved": 20,
+      "needs_changes": 0,
+      "pending": 0,
+      "rejected": 0
+    },
+    "audit_provenance": {
+      "decisions_with_provenance": 20,
+      "reviewers": [
+        "berksankir"
+      ],
+      "latest_reviewed_at_utc": "2026-09-02T08:37:55Z"
+    }
+  },
+  "protocol": {
+    "selection_split": "dev",
+    "test_split_accessed_for_tuning": false,
+    "dev_records": 10,
+    "dev_answerable": 8,
+    "dev_unanswerable": 2,
+    "quality_denominator": "answerable dev records only",
+    "latency_denominator": "all dev records",
+    "latency_percentile_method": "nearest-rank",
+    "reranker_instance_reused": true,
+    "reranker_instances_created": 1,
+    "default_fast_pipeline": "hybrid_rrf",
+    "optional_quality_pipeline": "hybrid_reranked"
+  },
+  "model_loading_ms": {
+    "corpus": 15.615299984347075,
+    "bm25": 55.05920000723563,
+    "embedding_model": 3912.676799984183,
+    "reranker_model": 3595.616600010544,
+    "qdrant": 162.33399999327958
+  },
+  "cold_query_ms": {
+    "hybrid_rrf": 327.72339999792166,
+    "reranking_only": 1803.1512000015937,
+    "hybrid_reranked": 2130.8745999995153
+  },
+  "warm_query_ms": {
+    "hybrid_rrf": {
+      "mean": 23.849133340667727,
+      "p50": 23.798200010787696,
+      "p95": 28.068100014934316
+    },
+    "configured_reranking_only": {
+      "mean": 963.488630001666,
+      "p50": 992.7432000113185,
+      "p95": 1096.7760999919847
+    },
+    "configured_hybrid_reranked": {
+      "mean": 1017.7251900080591,
+      "p50": 1019.6406500035664,
+      "p95": 1326.0045000060927
+    }
+  },
+  "hybrid_rrf_quality": {
+    "total_queries": 10,
+    "answerable_queries": 8,
+    "unanswerable_queries": 2,
+    "recall_at_1": 0.75,
+    "recall_at_3": 0.875,
+    "recall_at_5": 0.875,
+    "mrr": 0.8303571428571429,
+    "correct_document_retrieval": 0.75,
+    "correct_page_retrieval": 0.75
+  },
+  "variants": [
+    {
+      "variant_id": "configured_top20_b4_t4",
+      "rerank_top_n": 20,
+      "batch_size": 4,
+      "cpu_threads": 4,
+      "quality": {
+        "total_queries": 10,
+        "answerable_queries": 8,
+        "unanswerable_queries": 2,
+        "recall_at_1": 0.625,
+        "recall_at_3": 0.875,
+        "recall_at_5": 1.0,
+        "mrr": 0.775,
+        "correct_document_retrieval": 0.875,
+        "correct_page_retrieval": 0.625
+      },
+      "latency_ms": {
+        "retrieval": {
+          "mean": 54.23656000639312,
+          "p50": 23.80190000985749,
+          "p95": 327.72339999792166
+        },
+        "reranking_only": {
+          "mean": 963.488630001666,
+          "p50": 992.7432000113185,
+          "p95": 1096.7760999919847
+        },
+        "hybrid_reranked_total": {
+          "mean": 1017.7251900080591,
+          "p50": 1019.6406500035664,
+          "p95": 1326.0045000060927
+        }
+      },
+      "queries": [
+        {
+          "candidate_id": "candidate-001",
+          "retrieval_ms": 327.72339999792166,
+          "reranking_ms": 998.281100008171,
+          "total_ms": 1326.0045000060927
+        },
+        {
+          "candidate_id": "candidate-006",
+          "retrieval_ms": 28.068100014934316,
+          "reranking_ms": 999.8431999993045,
+          "total_ms": 1027.9113000142388
+        },
+        {
+          "candidate_id": "candidate-010",
+          "retrieval_ms": 23.805600008927286,
+          "reranking_ms": 1030.221299995901,
+          "total_ms": 1054.0269000048283
+        },
+        {
+          "candidate_id": "candidate-016",
+          "retrieval_ms": 20.88940000976436,
+          "reranking_ms": 778.3883000083733,
+          "total_ms": 799.2777000181377
+        },
+        {
+          "candidate_id": "candidate-023",
+          "retrieval_ms": 23.79590002237819,
+          "reranking_ms": 867.8055000200402,
+          "total_ms": 891.6014000424184
+        },
+        {
+          "candidate_id": "candidate-026",
+          "retrieval_ms": 23.798200010787696,
+          "reranking_ms": 1096.7760999919847,
+          "total_ms": 1120.5743000027724
+        },
+        {
+          "candidate_id": "candidate-029",
+          "retrieval_ms": 21.640699997078627,
+          "reranking_ms": 914.368799974909,
+          "total_ms": 936.0094999719877
+        },
+        {
+          "candidate_id": "candidate-035",
+          "retrieval_ms": 25.146800006041303,
+          "reranking_ms": 923.3727999962866,
+          "total_ms": 948.5196000023279
+        },
+        {
+          "candidate_id": "candidate-041",
+          "retrieval_ms": 24.16469997842796,
+          "reranking_ms": 987.205300014466,
+          "total_ms": 1011.369999992894
+        },
+        {
+          "candidate_id": "candidate-042",
+          "retrieval_ms": 23.332800017669797,
+          "reranking_ms": 1038.6239000072237,
+          "total_ms": 1061.9567000248935
+        }
+      ]
+    },
+    {
+      "variant_id": "bounded_top10_b4_t4",
+      "rerank_top_n": 10,
+      "batch_size": 4,
+      "cpu_threads": 4,
+      "quality": {
+        "total_queries": 10,
+        "answerable_queries": 8,
+        "unanswerable_queries": 2,
+        "recall_at_1": 0.5,
+        "recall_at_3": 0.875,
+        "recall_at_5": 1.0,
+        "mrr": 0.7125,
+        "correct_document_retrieval": 0.75,
+        "correct_page_retrieval": 0.5
+      },
+      "latency_ms": {
+        "retrieval": {
+          "mean": 54.23656000639312,
+          "p50": 23.80190000985749,
+          "p95": 327.72339999792166
+        },
+        "reranking_only": {
+          "mean": 530.5118399934145,
+          "p50": 502.34289999934845,
+          "p95": 612.6195999968331
+        },
+        "hybrid_reranked_total": {
+          "mean": 584.7483999998076,
+          "p50": 525.3692499973113,
+          "p95": 916.3032999786083
+        }
+      },
+      "queries": [
+        {
+          "candidate_id": "candidate-001",
+          "retrieval_ms": 327.72339999792166,
+          "reranking_ms": 588.5798999806866,
+          "total_ms": 916.3032999786083
+        },
+        {
+          "candidate_id": "candidate-006",
+          "retrieval_ms": 28.068100014934316,
+          "reranking_ms": 585.022499988554,
+          "total_ms": 613.0906000034884
+        },
+        {
+          "candidate_id": "candidate-010",
+          "retrieval_ms": 23.805600008927286,
+          "reranking_ms": 493.9258999947924,
+          "total_ms": 517.7315000037197
+        },
+        {
+          "candidate_id": "candidate-016",
+          "retrieval_ms": 20.88940000976436,
+          "reranking_ms": 472.1455999824684,
+          "total_ms": 493.03499999223277
+        },
+        {
+          "candidate_id": "candidate-023",
+          "retrieval_ms": 23.79590002237819,
+          "reranking_ms": 445.18839998636395,
+          "total_ms": 468.98430000874214
+        },
+        {
+          "candidate_id": "candidate-026",
+          "retrieval_ms": 23.798200010787696,
+          "reranking_ms": 498.9685000036843,
+          "total_ms": 522.766700014472
+        },
+        {
+          "candidate_id": "candidate-029",
+          "retrieval_ms": 21.640699997078627,
+          "reranking_ms": 500.8786999969743,
+          "total_ms": 522.519399994053
+        },
+        {
+          "candidate_id": "candidate-035",
+          "retrieval_ms": 25.146800006041303,
+          "reranking_ms": 603.9822000020649,
+          "total_ms": 629.1290000081062
+        },
+        {
+          "candidate_id": "candidate-041",
+          "retrieval_ms": 24.16469997842796,
+          "reranking_ms": 503.8071000017226,
+          "total_ms": 527.9717999801505
+        },
+        {
+          "candidate_id": "candidate-042",
+          "retrieval_ms": 23.332800017669797,
+          "reranking_ms": 612.6195999968331,
+          "total_ms": 635.9524000145029
+        }
+      ]
+    },
+    {
+      "variant_id": "bounded_top10_b2_t4",
+      "rerank_top_n": 10,
+      "batch_size": 2,
+      "cpu_threads": 4,
+      "quality": {
+        "total_queries": 10,
+        "answerable_queries": 8,
+        "unanswerable_queries": 2,
+        "recall_at_1": 0.5,
+        "recall_at_3": 0.875,
+        "recall_at_5": 1.0,
+        "mrr": 0.7125,
+        "correct_document_retrieval": 0.75,
+        "correct_page_retrieval": 0.5
+      },
+      "latency_ms": {
+        "retrieval": {
+          "mean": 54.23656000639312,
+          "p50": 23.80190000985749,
+          "p95": 327.72339999792166
+        },
+        "reranking_only": {
+          "mean": 509.11610000184737,
+          "p50": 511.19849999668077,
+          "p95": 602.1186000143643
+        },
+        "hybrid_reranked_total": {
+          "mean": 563.3526600082405,
+          "p50": 552.2331999964081,
+          "p95": 825.5785999936052
+        }
+      },
+      "queries": [
+        {
+          "candidate_id": "candidate-001",
+          "retrieval_ms": 327.72339999792166,
+          "reranking_ms": 497.8551999956835,
+          "total_ms": 825.5785999936052
+        },
+        {
+          "candidate_id": "candidate-006",
+          "retrieval_ms": 28.068100014934316,
+          "reranking_ms": 431.85739999171346,
+          "total_ms": 459.9255000066478
+        },
+        {
+          "candidate_id": "candidate-010",
+          "retrieval_ms": 23.805600008927286,
+          "reranking_ms": 456.8578000180423,
+          "total_ms": 480.6634000269696
+        },
+        {
+          "candidate_id": "candidate-016",
+          "retrieval_ms": 20.88940000976436,
+          "reranking_ms": 484.444200003054,
+          "total_ms": 505.33360001281835
+        },
+        {
+          "candidate_id": "candidate-023",
+          "retrieval_ms": 23.79590002237819,
+          "reranking_ms": 413.1911000004038,
+          "total_ms": 436.987000022782
+        },
+        {
+          "candidate_id": "candidate-026",
+          "retrieval_ms": 23.798200010787696,
+          "reranking_ms": 531.9617000059225,
+          "total_ms": 555.7599000167102
+        },
+        {
+          "candidate_id": "candidate-029",
+          "retrieval_ms": 21.640699997078627,
+          "reranking_ms": 562.1653999842238,
+          "total_ms": 583.8060999813024
+        },
+        {
+          "candidate_id": "candidate-035",
+          "retrieval_ms": 25.146800006041303,
+          "reranking_ms": 602.1186000143643,
+          "total_ms": 627.2654000204057
+        },
+        {
+          "candidate_id": "candidate-041",
+          "retrieval_ms": 24.16469997842796,
+          "reranking_ms": 524.541799997678,
+          "total_ms": 548.706499976106
+        },
+        {
+          "candidate_id": "candidate-042",
+          "retrieval_ms": 23.332800017669797,
+          "reranking_ms": 586.167800007388,
+          "total_ms": 609.5006000250578
+        }
+      ]
+    },
+    {
+      "variant_id": "bounded_top10_b4_t2",
+      "rerank_top_n": 10,
+      "batch_size": 4,
+      "cpu_threads": 2,
+      "quality": {
+        "total_queries": 10,
+        "answerable_queries": 8,
+        "unanswerable_queries": 2,
+        "recall_at_1": 0.5,
+        "recall_at_3": 0.875,
+        "recall_at_5": 1.0,
+        "mrr": 0.7125,
+        "correct_document_retrieval": 0.75,
+        "correct_page_retrieval": 0.5
+      },
+      "latency_ms": {
+        "retrieval": {
+          "mean": 54.23656000639312,
+          "p50": 23.80190000985749,
+          "p95": 327.72339999792166
+        },
+        "reranking_only": {
+          "mean": 754.2904800036922,
+          "p50": 747.3092000000179,
+          "p95": 869.7723000077531
+        },
+        "hybrid_reranked_total": {
+          "mean": 808.5270400100853,
+          "p50": 770.0323500030208,
+          "p95": 1180.3608000045642
+        }
+      },
+      "queries": [
+        {
+          "candidate_id": "candidate-001",
+          "retrieval_ms": 327.72339999792166,
+          "reranking_ms": 852.6374000066426,
+          "total_ms": 1180.3608000045642
+        },
+        {
+          "candidate_id": "candidate-006",
+          "retrieval_ms": 28.068100014934316,
+          "reranking_ms": 705.5007000162732,
+          "total_ms": 733.5688000312075
+        },
+        {
+          "candidate_id": "candidate-010",
+          "retrieval_ms": 23.805600008927286,
+          "reranking_ms": 730.310399987502,
+          "total_ms": 754.1159999964293
+        },
+        {
+          "candidate_id": "candidate-016",
+          "retrieval_ms": 20.88940000976436,
+          "reranking_ms": 635.7340999820735,
+          "total_ms": 656.6234999918379
+        },
+        {
+          "candidate_id": "candidate-023",
+          "retrieval_ms": 23.79590002237819,
+          "reranking_ms": 647.1441999892704,
+          "total_ms": 670.9401000116486
+        },
+        {
+          "candidate_id": "candidate-026",
+          "retrieval_ms": 23.798200010787696,
+          "reranking_ms": 706.4924000005703,
+          "total_ms": 730.290600011358
+        },
+        {
+          "candidate_id": "candidate-029",
+          "retrieval_ms": 21.640699997078627,
+          "reranking_ms": 764.3080000125337,
+          "total_ms": 785.9487000096124
+        },
+        {
+          "candidate_id": "candidate-035",
+          "retrieval_ms": 25.146800006041303,
+          "reranking_ms": 869.7723000077531,
+          "total_ms": 894.9191000137944
+        },
+        {
+          "candidate_id": "candidate-041",
+          "retrieval_ms": 24.16469997842796,
+          "reranking_ms": 790.7007000176236,
+          "total_ms": 814.8653999960516
+        },
+        {
+          "candidate_id": "candidate-042",
+          "retrieval_ms": 23.332800017669797,
+          "reranking_ms": 840.3046000166796,
+          "total_ms": 863.6374000343494
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "default_fast_pipeline": "hybrid_rrf",
+    "reason": "Selected before generation because the dev split shows a much lower latency and reranking does not consistently improve dev retrieval metrics.",
+    "test_split_used": false
+  },
+  "runtime": {
+    "total_seconds": 46.37626759998966,
+    "current_process_rss_bytes": 1368723456,
+    "peak_process_rss_bytes": 1368723456,
+    "memory_measurement": "process working set; approximate",
+    "qdrant_point_count": 436,
+    "chunk_count": 436
+  },
+  "reproducibility": {
+    "started_at_utc": "2026-09-02T09:52:52.631045Z",
+    "finished_at_utc": "2026-09-02T09:53:39.007318Z",
+    "config_sha256": "ba20e107f0ca9cabf7e89415a10e232cac6c10f2775e0296837c5bf74bebc4ca",
+    "silver_sha256": "0599ae0c761db73e7512f4cd4eef0a2ced2d258319f127076a0949096c9aa268",
+    "audit_sha256": "3cc487046596ab31ad7950b3eb115d360d502d693cc4c4093e8cfb82a60f684a",
+    "embedding_model_id": "intfloat/multilingual-e5-small",
+    "embedding_model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "reranker_model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "reranker_model_revision": "1427fd652930e4ba29e8149678df786c240d8825",
+    "variants": [
+      {
+        "variant_id": "configured_top20_b4_t4",
+        "rerank_top_n": 20,
+        "batch_size": 4,
+        "cpu_threads": 4
+      },
+      {
+        "variant_id": "bounded_top10_b4_t4",
+        "rerank_top_n": 10,
+        "batch_size": 4,
+        "cpu_threads": 4
+      },
+      {
+        "variant_id": "bounded_top10_b2_t4",
+        "rerank_top_n": 10,
+        "batch_size": 2,
+        "cpu_threads": 4
+      },
+      {
+        "variant_id": "bounded_top10_b4_t2",
+        "rerank_top_n": 10,
+        "batch_size": 4,
+        "cpu_threads": 2
+      }
+    ]
+  }
+}

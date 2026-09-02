@@ -173,3 +173,20 @@ def test_canonical_silver_results_cover_both_splits_without_claiming_gold() -> N
     assert markdown.startswith("# Silver retrieval benchmark")
     assert "Human audit durumu: approved=20" in markdown
     assert "insan onaylı gold" not in markdown
+
+
+def test_reranker_profile_is_dev_only_and_reuses_one_model_instance() -> None:
+    payload = json.loads(
+        (CANONICAL_SILVER / "reranker_profile.json").read_text(encoding="utf-8")
+    )
+
+    assert payload["dataset"]["kind"] == "silver"
+    assert payload["dataset"]["human_reviewed"] is False
+    assert payload["protocol"]["selection_split"] == "dev"
+    assert payload["protocol"]["test_split_accessed_for_tuning"] is False
+    assert payload["protocol"]["reranker_instance_reused"] is True
+    assert payload["protocol"]["reranker_instances_created"] == 1
+    assert payload["protocol"]["default_fast_pipeline"] == "hybrid_rrf"
+    assert payload["runtime"]["chunk_count"] == 436
+    assert len(payload["variants"]) == 4
+    assert payload["selection"]["test_split_used"] is False

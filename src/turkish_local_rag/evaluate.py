@@ -540,7 +540,7 @@ def _run_pipeline(
         top_k=config.rrf.dense_candidates,
     )
     fusion_limit = (
-        config.reranker.candidate_count
+        config.reranker.rerank_top_n
         if pipeline == "hybrid_reranked"
         else result_limit
     )
@@ -580,7 +580,7 @@ def _warm_up(
     fused = reciprocal_rank_fusion(
         {"bm25": sparse, "dense": dense},
         rank_constant=config.rrf.rank_constant,
-        limit=config.reranker.candidate_count,
+        limit=config.reranker.rerank_top_n,
     )
     rerank_function(question, fused, reranker, limit=result_limit)
 

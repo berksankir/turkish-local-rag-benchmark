@@ -347,7 +347,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             hits = dense_hits
         else:
             fusion_limit = (
-                config.reranker.candidate_count
+                config.reranker.rerank_top_n
                 if args.mode == "hybrid-reranked"
                 else output_limit
             )
