@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import tomllib
 
 
 PROVENANCE_MARKERS = (
@@ -65,11 +66,20 @@ def test_final_error_analysis_preserves_reported_limitations() -> None:
     assert "test split was not used" in analysis.lower()
 
 
-def test_readmes_warn_about_pymupdf_and_unselected_repository_license() -> None:
+def test_readmes_warn_about_pymupdf_and_identify_repository_license() -> None:
     for path in (Path("README.md"), Path("README.tr.md")):
         text = " ".join(path.read_text(encoding="utf-8").split())
         assert "AGPL-3.0" in text
         assert "commercial" in text or "ticari" in text
-        assert "repository's own license has deliberately not been selected" in text or (
-            "repository’nin kendi lisansı henüz bilinçli olarak seçilmemiştir" in text
-        )
+        assert "[MIT](LICENSE)" in text
+        assert "third-party" in text or "üçüncü taraf" in text
+
+
+def test_repository_has_selected_mit_license_consistently() -> None:
+    license_text = Path("LICENSE").read_text(encoding="utf-8")
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    assert license_text.startswith("MIT License\n")
+    assert "Copyright (c) 2026 Berk Sankır" in license_text
+    assert "Permission is hereby granted, free of charge" in license_text
+    assert project["project"]["license"] == "MIT"

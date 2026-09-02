@@ -244,6 +244,7 @@ iki izinli denemeden sonra da untrusted context ID seçti. Yanıt
 
 | Bileşen | Sabit sürüm/revision | Upstream lisans |
 |---|---|---|
+| Bu repository | 0.1.0 | [MIT](LICENSE) |
 | Qwen2.5 generator | `91cad511…`, Q4_K_M | [Apache-2.0](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/blob/main/LICENSE) |
 | llama.cpp | b10621 / commit `c1d0e7a00` | [MIT](https://github.com/ggml-org/llama.cpp/blob/b10621/LICENSE) |
 | multilingual-e5-small | `614241f6…` | [MIT](https://huggingface.co/intfloat/multilingual-e5-small/tree/614241f622f53c4eeff9890bdc4f31cfecc418b3) |
@@ -256,8 +257,8 @@ iki izinli denemeden sonra da untrusted context ID seçti. Yanıt
 Bu tablo bilgi amaçlıdır; hukuki tavsiye veya uyumluluk garantisi değildir.
 Dağıtımda PyMuPDF’nin AGPL yükümlülükleri ya da ticari koşulları özellikle
 değerlendirilmelidir. Transitif bağımlılıkların kendi lisansları vardır. Bu
-repository’nin kendi lisansı henüz bilinçli olarak seçilmemiştir; üçüncü taraf
-lisansları proje kodunu lisanslamaz.
+repository’nin kaynak kodu [MIT Lisansı](LICENSE) altında yayımlanmaktadır. Proje
+lisansı, üçüncü taraf lisans yükümlülüklerinin yerine geçmez veya onları geçersiz kılmaz.
 
 ## Bilinen sınırlamalar
 

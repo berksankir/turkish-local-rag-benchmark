@@ -256,6 +256,7 @@ normal answer.
 
 | Component | Pinned version/revision | Upstream license |
 |---|---|---|
+| This repository | 0.1.0 | [MIT](LICENSE) |
 | Qwen2.5 generator | `91cad511…`, Q4_K_M | [Apache-2.0](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/blob/main/LICENSE) |
 | llama.cpp | b10621 / commit `c1d0e7a00` | [MIT](https://github.com/ggml-org/llama.cpp/blob/b10621/LICENSE) |
 | multilingual-e5-small | `614241f6…` | [MIT](https://huggingface.co/intfloat/multilingual-e5-small/tree/614241f622f53c4eeff9890bdc4f31cfecc418b3) |
@@ -268,8 +269,8 @@ normal answer.
 This table is informational, not legal advice or a compatibility guarantee.
 PyMuPDF's AGPL obligations or commercial terms require particular attention for
 distribution. Transitive dependencies have their own licenses. This repository's
-own license has deliberately not been selected yet; third-party licenses do not
-license the project code.
+source code is released under the [MIT License](LICENSE). That project license
+does not replace or override third-party license obligations.
 
 ## Known limitations
 
