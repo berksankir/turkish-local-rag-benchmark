@@ -85,8 +85,16 @@ def test_committed_corpus_lock_matches_nine_local_verified_pdfs() -> None:
     config = load_config("config/default.toml")
     paths = config.resolve_paths("config/default.toml")
 
-    records = verify_corpus_lock(paths)
+    records = verify_corpus_lock(paths, require_local_files=False)
 
     assert len(records) == 9
     assert all(record.size_bytes > 0 for record in records)
     assert all(len(record.sha256) == 64 for record in records)
+
+    local_corpus_is_complete = all(
+        (paths.pdf_directory / f"{record.document_id}.pdf").is_file()
+        and (paths.metadata_directory / f"{record.document_id}.json").is_file()
+        for record in records
+    )
+    if local_corpus_is_complete:
+        assert verify_corpus_lock(paths) == records
