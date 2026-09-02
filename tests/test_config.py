@@ -27,6 +27,9 @@ def test_default_config_is_valid() -> None:
     assert config.reranker.rerank_top_n == 20
     assert config.reranker.batch_size == 4
     assert config.reranker.cpu_threads == 4
+    assert config.generation.model_size_bytes == 1117320736
+    assert config.generation.context_window_tokens == 2560
+    assert config.evidence.context_top_k == 3
 
 
 def test_paths_are_resolved_from_config_location() -> None:
@@ -43,6 +46,12 @@ def test_paths_are_resolved_from_config_location() -> None:
     ).resolve()
     assert paths.reranker_model_directory == Path(
         "models/mmarco-mMiniLMv2-L12-H384-v1"
+    ).resolve()
+    assert paths.generator_model_file == Path(
+        "models/qwen2.5-1.5b-instruct-gguf/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+    ).resolve()
+    assert paths.llama_server_executable == Path(
+        "runtime/llama-b10621/bin/llama-server.exe"
     ).resolve()
     assert paths.qdrant_directory == Path("indexes/qdrant").resolve()
     assert paths.evaluation_candidates == Path(

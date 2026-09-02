@@ -9,6 +9,8 @@ extracted_pages_directory = "artifacts/extracted"
 chunks_directory = "artifacts/chunks"
 embedding_model_directory = "models/multilingual-e5-small"
 reranker_model_directory = "models/mmarco-mMiniLMv2-L12-H384-v1"
+generator_model_file = "models/qwen2.5-1.5b-instruct-gguf/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+llama_server_executable = "runtime/llama-b10621/bin/llama-server.exe"
 qdrant_directory = "indexes/qdrant"
 evaluation_candidates = "evaluation/candidates.jsonl"
 evaluation_review = "evaluation/review.csv"
@@ -71,3 +73,28 @@ rerank_top_n = 20
 top_k = 10
 cpu_threads = 4
 zero_shot_turkish = true
+
+[generation]
+backend = "llama.cpp-server"
+model_id = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+model_revision = "91cad51170dc346986eccefdc2dd33a9da36ead9"
+model_sha256 = "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
+model_size_bytes = 1117320736
+runtime_version = "b10621"
+runtime_sha256 = "0e8b65e650e369f70f8307d890508886f171ef4fb00facccddd4a1b7ffdaca51"
+context_window_tokens = 2560
+max_output_tokens = 160
+timeout_seconds = 120
+max_retries = 1
+seed = 42
+temperature = 0.0
+top_p = 1.0
+top_k = 0
+cpu_threads = 4
+server_host = "127.0.0.1"
+server_port = 8091
+
+[evidence]
+context_top_k = 3
+minimum_query_coverage = 0.40
+minimum_rrf_score = 0.020

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-02T10:44:23.966671Z",
+  "dataset": {
+    "kind": "silver",
+    "human_reviewed": false,
+    "split": "dev",
+    "records": 10,
+    "answerable": 8,
+    "unanswerable": 2,
+    "test_split_accessed_for_tuning": false
+  },
+  "selection_policy": "maximize balanced answerable coverage/correct abstention; then minimize false abstention; fixed four-variant comparison",
+  "selected": {
+    "name": "coverage_040_score_020",
+    "minimum_query_coverage": 0.4,
+    "minimum_rrf_score": 0.02,
+    "answerable_coverage": 1.0,
+    "false_abstention_rate": 0.0,
+    "correct_abstention_rate": 1.0,
+    "balanced_gate_accuracy": 1.0
+  },
+  "variants": [
+    {
+      "name": "coverage_020_score_020",
+      "minimum_query_coverage": 0.2,
+      "minimum_rrf_score": 0.02,
+      "answerable_coverage": 1.0,
+      "false_abstention_rate": 0.0,
+      "correct_abstention_rate": 0.0,
+      "balanced_gate_accuracy": 0.5
+    },
+    {
+      "name": "coverage_030_score_020",
+      "minimum_query_coverage": 0.3,
+      "minimum_rrf_score": 0.02,
+      "answerable_coverage": 1.0,
+      "false_abstention_rate": 0.0,
+      "correct_abstention_rate": 0.5,
+      "balanced_gate_accuracy": 0.75
+    },
+    {
+      "name": "coverage_040_score_020",
+      "minimum_query_coverage": 0.4,
+      "minimum_rrf_score": 0.02,
+      "answerable_coverage": 1.0,
+      "false_abstention_rate": 0.0,
+      "correct_abstention_rate": 1.0,
+      "balanced_gate_accuracy": 1.0
+    },
+    {
+      "name": "coverage_030_score_024",
+      "minimum_query_coverage": 0.3,
+      "minimum_rrf_score": 0.024,
+      "answerable_coverage": 1.0,
+      "false_abstention_rate": 0.0,
+      "correct_abstention_rate": 0.5,
+      "balanced_gate_accuracy": 0.75
+    }
+  ],
+  "observations": [
+    {
+      "candidate_id": "candidate-001",
+      "answerable": true,
+      "question": "Sabancı Üniversitesinin en yüksek karar organı hangisidir?",
+      "query_coverage": 0.8333333333333334,
+      "top_retrieval_score": 0.024624624624624628,
+      "context_chunk_ids": [
+        "sabanci-ana-yonetmeligi:p2:c5",
+        "sabanci-ana-yonetmeligi:p4:c1",
+        "tumlesik-uretim-teknolojileri-merkezi-yonetmeligi:p3:c1"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-006",
+      "answerable": true,
+      "question": "TGY'de sonbahar ve ilkbahar dönemlerinin her biri kaç haftadır?",
+      "query_coverage": 1.0,
+      "top_retrieval_score": 0.03252247488101534,
+      "context_chunk_ids": [
+        "lisans-egitim-ogretim-yonetmeligi:p2:c0",
+        "temel-gelistirme-yili-egitim-ogretim-yonetmeligi:p2:c0",
+        "lisansustu-egitim-ogretim-yonetmeligi:p2:c1"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-010",
+      "answerable": true,
+      "question": "Lisans programında bir akademik yılın sonbahar ve ilkbahar dönemleri kaçar haftadır?",
+      "query_coverage": 0.6666666666666666,
+      "top_retrieval_score": 0.03252247488101534,
+      "context_chunk_ids": [
+        "lisans-egitim-ogretim-yonetmeligi:p2:c0",
+        "lisansustu-egitim-ogretim-yonetmeligi:p2:c1",
+        "lisans-egitim-ogretim-yonetmeligi:p10:c4"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-016",
+      "answerable": true,
+      "question": "Lisansüstü programlarda öğrenim dili nedir?",
+      "query_coverage": 1.0,
+      "top_retrieval_score": 0.02886002886002886,
+      "context_chunk_ids": [
+        "lisans-egitim-ogretim-yonetmeligi:p3:c3",
+        "temel-gelistirme-yili-egitim-ogretim-yonetmeligi:p2:c3",
+        "lisans-egitim-ogretim-yonetmeligi:p2:c1"
+      ],
+      "exact_source_span_in_context": false
+    },
+    {
+      "candidate_id": "candidate-023",
+      "answerable": true,
+      "question": "Nanotanı Merkezinin araştırma ve teknoloji geliştirme amaçları arasında hangi tanı ürünü yer alır?",
+      "query_coverage": 0.7272727272727273,
+      "top_retrieval_score": 0.03252247488101534,
+      "context_chunk_ids": [
+        "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi:p1:c4",
+        "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi:p1:c5",
+        "veri-analitigi-merkezi-yonetmeligi:p1:c4"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-026",
+      "answerable": true,
+      "question": "Toplumsal Cinsiyet ve Kadın Çalışmaları Merkezinin farkındalık amaçlı faaliyetleri nelerdir?",
+      "query_coverage": 0.875,
+      "top_retrieval_score": 0.03125763125763126,
+      "context_chunk_ids": [
+        "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi:p1:c4",
+        "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi:p1:c0",
+        "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi:p2:c0"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-029",
+      "answerable": true,
+      "question": "Veri Analitiği Merkezinin temel bilimsel ve teknolojik amacı nedir?",
+      "query_coverage": 1.0,
+      "top_retrieval_score": 0.03252247488101534,
+      "context_chunk_ids": [
+        "veri-analitigi-merkezi-yonetmeligi:p1:c4",
+        "veri-analitigi-merkezi-yonetmeligi:p1:c0",
+        "tumlesik-uretim-teknolojileri-merkezi-yonetmeligi:p1:c6"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-035",
+      "answerable": true,
+      "question": "İhale komisyonunda ihale konusu işin uzmanı olmak şartıyla en az kaç kişi yer alır?",
+      "query_coverage": 0.9,
+      "top_retrieval_score": 0.03278688524590164,
+      "context_chunk_ids": [
+        "sabanci-ihale-yonetmeligi:p2:c4",
+        "sabanci-ihale-yonetmeligi:p4:c5",
+        "sabanci-ihale-yonetmeligi:p8:c1"
+      ],
+      "exact_source_span_in_context": true
+    },
+    {
+      "candidate_id": "candidate-041",
+      "answerable": false,
+      "question": "Sabancı Üniversitesi kampüs yemekhanesinin 7 Eylül 2026 Pazartesi günü öğle menüsü nedir?",
+      "query_coverage": 0.3,
+      "top_retrieval_score": 0.03225806451612903,
+      "context_chunk_ids": [
+        "sabanci-ana-yonetmeligi:p1:c6",
+        "sabanci-ana-yonetmeligi:p2:c3",
+        "sabanci-ana-yonetmeligi:p7:c6"
+      ],
+      "exact_source_span_in_context": null
+    },
+    {
+      "candidate_id": "candidate-042",
+      "answerable": false,
+      "question": "2026-2027 akademik yılında kampüs-servis hattının hafta içi ilk hareket saati kaçtır?",
+      "query_coverage": 0.23076923076923078,
+      "top_retrieval_score": 0.027893738140417457,
+      "context_chunk_ids": [
+        "lisansustu-egitim-ogretim-yonetmeligi:p5:c2",
+        "lisans-egitim-ogretim-yonetmeligi:p4:c4",
+        "lisans-egitim-ogretim-yonetmeligi:p13:c4"
+      ],
+      "exact_source_span_in_context": null
+    }
+  ]
+}

@@ -37,6 +37,8 @@ def _paths(tmp_path: Path) -> ResolvedPaths:
         chunks_directory=tmp_path / "chunks",
         embedding_model_directory=tmp_path / "model",
         reranker_model_directory=tmp_path / "reranker",
+        generator_model_file=tmp_path / "generator.gguf",
+        llama_server_executable=tmp_path / "llama-server.exe",
         qdrant_directory=tmp_path / "qdrant",
         evaluation_candidates=tmp_path / "evaluation" / "candidates.jsonl",
         evaluation_review=tmp_path / "evaluation" / "review.csv",

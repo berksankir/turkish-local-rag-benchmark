@@ -22,6 +22,8 @@ class ResolvedPaths:
     chunks_directory: Path
     embedding_model_directory: Path
     reranker_model_directory: Path
+    generator_model_file: Path
+    llama_server_executable: Path
     qdrant_directory: Path
     evaluation_candidates: Path
     evaluation_review: Path
@@ -41,6 +43,8 @@ class PathsConfig:
     chunks_directory: str
     embedding_model_directory: str
     reranker_model_directory: str
+    generator_model_file: str
+    llama_server_executable: str
     qdrant_directory: str
     evaluation_candidates: str
     evaluation_review: str
@@ -59,6 +63,8 @@ class PathsConfig:
             ("chunks_directory", self.chunks_directory),
             ("embedding_model_directory", self.embedding_model_directory),
             ("reranker_model_directory", self.reranker_model_directory),
+            ("generator_model_file", self.generator_model_file),
+            ("llama_server_executable", self.llama_server_executable),
             ("qdrant_directory", self.qdrant_directory),
             ("evaluation_candidates", self.evaluation_candidates),
             ("evaluation_review", self.evaluation_review),
@@ -106,6 +112,14 @@ class PathsConfig:
                 project_root,
                 self.reranker_model_directory,
                 "paths.reranker_model_directory",
+            ),
+            generator_model_file=_resolve_within_project(
+                project_root, self.generator_model_file, "paths.generator_model_file"
+            ),
+            llama_server_executable=_resolve_within_project(
+                project_root,
+                self.llama_server_executable,
+                "paths.llama_server_executable",
             ),
             qdrant_directory=_resolve_within_project(
                 project_root, self.qdrant_directory, "paths.qdrant_directory"
@@ -326,6 +340,87 @@ class RerankerConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class GeneratorConfig:
+    backend: str
+    model_id: str
+    model_revision: str
+    model_sha256: str
+    model_size_bytes: int
+    runtime_version: str
+    runtime_sha256: str
+    context_window_tokens: int
+    max_output_tokens: int
+    timeout_seconds: int
+    max_retries: int
+    seed: int
+    temperature: float
+    top_p: float
+    top_k: int
+    cpu_threads: int
+    server_host: str
+    server_port: int
+
+    def validate(self) -> None:
+        if self.backend != "llama.cpp-server":
+            raise ConfigError("generation.backend must be 'llama.cpp-server'")
+        for name, value in (
+            ("model_id", self.model_id),
+            ("model_revision", self.model_revision),
+            ("runtime_version", self.runtime_version),
+            ("server_host", self.server_host),
+        ):
+            if not value.strip():
+                raise ConfigError(f"generation.{name} cannot be empty")
+        for name, value in (
+            ("model_sha256", self.model_sha256),
+            ("runtime_sha256", self.runtime_sha256),
+        ):
+            if len(value) != 64 or any(
+                character not in "0123456789abcdef" for character in value
+            ):
+                raise ConfigError(f"generation.{name} must be lowercase SHA-256")
+        if self.model_size_bytes <= 0:
+            raise ConfigError("generation.model_size_bytes must be positive")
+        if not 2048 <= self.context_window_tokens <= 3072:
+            raise ConfigError(
+                "generation.context_window_tokens must be between 2048 and 3072"
+            )
+        if not 128 <= self.max_output_tokens <= 192:
+            raise ConfigError(
+                "generation.max_output_tokens must be between 128 and 192"
+            )
+        if self.timeout_seconds <= 0:
+            raise ConfigError("generation.timeout_seconds must be positive")
+        if not 0 <= self.max_retries <= 1:
+            raise ConfigError("generation.max_retries must be 0 or 1")
+        if not 0 <= self.temperature <= 2:
+            raise ConfigError("generation.temperature must be between 0 and 2")
+        if not 0 < self.top_p <= 1:
+            raise ConfigError("generation.top_p must be in (0, 1]")
+        if self.top_k < 0:
+            raise ConfigError("generation.top_k cannot be negative")
+        if self.cpu_threads <= 0:
+            raise ConfigError("generation.cpu_threads must be positive")
+        if not 1 <= self.server_port <= 65535:
+            raise ConfigError("generation.server_port must be a valid TCP port")
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceConfig:
+    context_top_k: int
+    minimum_query_coverage: float
+    minimum_rrf_score: float
+
+    def validate(self) -> None:
+        if not 1 <= self.context_top_k <= 10:
+            raise ConfigError("evidence.context_top_k must be between 1 and 10")
+        if not 0 <= self.minimum_query_coverage <= 1:
+            raise ConfigError("evidence.minimum_query_coverage must be between 0 and 1")
+        if self.minimum_rrf_score < 0:
+            raise ConfigError("evidence.minimum_rrf_score cannot be negative")
+
+
+@dataclass(frozen=True, slots=True)
 class ProjectConfig:
     schema_version: int
     paths: PathsConfig
@@ -336,6 +431,8 @@ class ProjectConfig:
     bm25: BM25Config
     dense: DenseConfig
     reranker: RerankerConfig
+    generation: GeneratorConfig
+    evidence: EvidenceConfig
 
     def validate(self) -> None:
         if self.schema_version != 1:
@@ -347,6 +444,8 @@ class ProjectConfig:
         self.bm25.validate()
         self.dense.validate()
         self.reranker.validate()
+        self.generation.validate()
+        self.evidence.validate()
 
     def resolve_paths(self, config_path: str | Path) -> ResolvedPaths:
         return self.paths.resolve(config_path)
@@ -374,6 +473,8 @@ def load_config(path: str | Path) -> ProjectConfig:
             "extraction",
             "chunking",
             "retrieval",
+            "generation",
+            "evidence",
         },
         "root",
     )
@@ -386,6 +487,8 @@ def load_config(path: str | Path) -> ProjectConfig:
     bm25 = _table(retrieval.get("bm25"), "retrieval.bm25")
     dense = _table(retrieval.get("dense"), "retrieval.dense")
     reranker = _table(retrieval.get("reranker"), "retrieval.reranker")
+    generation = _table(root.get("generation"), "generation")
+    evidence = _table(root.get("evidence"), "evidence")
 
     _require_exact_keys(
         paths,
@@ -398,6 +501,8 @@ def load_config(path: str | Path) -> ProjectConfig:
             "chunks_directory",
             "embedding_model_directory",
             "reranker_model_directory",
+            "generator_model_file",
+            "llama_server_executable",
             "qdrant_directory",
             "evaluation_candidates",
             "evaluation_review",
@@ -471,6 +576,35 @@ def load_config(path: str | Path) -> ProjectConfig:
         },
         "retrieval.reranker",
     )
+    _require_exact_keys(
+        generation,
+        {
+            "backend",
+            "model_id",
+            "model_revision",
+            "model_sha256",
+            "model_size_bytes",
+            "runtime_version",
+            "runtime_sha256",
+            "context_window_tokens",
+            "max_output_tokens",
+            "timeout_seconds",
+            "max_retries",
+            "seed",
+            "temperature",
+            "top_p",
+            "top_k",
+            "cpu_threads",
+            "server_host",
+            "server_port",
+        },
+        "generation",
+    )
+    _require_exact_keys(
+        evidence,
+        {"context_top_k", "minimum_query_coverage", "minimum_rrf_score"},
+        "evidence",
+    )
 
     config = ProjectConfig(
         schema_version=_integer(root, "schema_version", "root"),
@@ -488,6 +622,10 @@ def load_config(path: str | Path) -> ProjectConfig:
             ),
             reranker_model_directory=_string(
                 paths, "reranker_model_directory", "paths"
+            ),
+            generator_model_file=_string(paths, "generator_model_file", "paths"),
+            llama_server_executable=_string(
+                paths, "llama_server_executable", "paths"
             ),
             qdrant_directory=_string(paths, "qdrant_directory", "paths"),
             evaluation_candidates=_string(
@@ -580,6 +718,39 @@ def load_config(path: str | Path) -> ProjectConfig:
             cpu_threads=_integer(reranker, "cpu_threads", "retrieval.reranker"),
             zero_shot_turkish=_boolean(
                 reranker, "zero_shot_turkish", "retrieval.reranker"
+            ),
+        ),
+        generation=GeneratorConfig(
+            backend=_string(generation, "backend", "generation"),
+            model_id=_string(generation, "model_id", "generation"),
+            model_revision=_string(generation, "model_revision", "generation"),
+            model_sha256=_string(generation, "model_sha256", "generation"),
+            model_size_bytes=_integer(generation, "model_size_bytes", "generation"),
+            runtime_version=_string(generation, "runtime_version", "generation"),
+            runtime_sha256=_string(generation, "runtime_sha256", "generation"),
+            context_window_tokens=_integer(
+                generation, "context_window_tokens", "generation"
+            ),
+            max_output_tokens=_integer(
+                generation, "max_output_tokens", "generation"
+            ),
+            timeout_seconds=_integer(generation, "timeout_seconds", "generation"),
+            max_retries=_integer(generation, "max_retries", "generation"),
+            seed=_integer(generation, "seed", "generation"),
+            temperature=_number(generation, "temperature", "generation"),
+            top_p=_number(generation, "top_p", "generation"),
+            top_k=_integer(generation, "top_k", "generation"),
+            cpu_threads=_integer(generation, "cpu_threads", "generation"),
+            server_host=_string(generation, "server_host", "generation"),
+            server_port=_integer(generation, "server_port", "generation"),
+        ),
+        evidence=EvidenceConfig(
+            context_top_k=_integer(evidence, "context_top_k", "evidence"),
+            minimum_query_coverage=_number(
+                evidence, "minimum_query_coverage", "evidence"
+            ),
+            minimum_rrf_score=_number(
+                evidence, "minimum_rrf_score", "evidence"
             ),
         ),
     )
