@@ -1,6 +1,7 @@
 * text=auto
 
 *.csv text eol=lf
+evaluation/silver_audit.csv text eol=crlf
 *.json text eol=lf
 *.jsonl text eol=lf
 *.md text eol=lf
