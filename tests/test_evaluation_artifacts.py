@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 import hashlib
 import io
 import json
@@ -94,15 +95,38 @@ def test_provisional_markdown_has_correct_labels_and_unchanged_metrics() -> None
     assert hashlib.sha256(metric_bytes).hexdigest() == MARKDOWN_METRIC_ROWS_SHA256
 
 
-def test_pending_review_artifacts_have_empty_human_provenance() -> None:
-    expected_counts = {
-        Path("evaluation/review.csv"): 50,
-        Path("evaluation/silver_audit.csv"): 20,
-    }
-    for path, expected_count in expected_counts.items():
-        with path.open("r", encoding="utf-8-sig", newline="") as source:
-            rows = list(csv.DictReader(source))
-        assert len(rows) == expected_count
-        assert all(row["review_status"] == "pending" for row in rows)
-        assert all(row["reviewer"] == "" for row in rows)
-        assert all(row["reviewed_at_utc"] == "" for row in rows)
+def test_full_review_remains_pending_without_human_provenance() -> None:
+    with Path("evaluation/review.csv").open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as source:
+        rows = list(csv.DictReader(source))
+
+    assert len(rows) == 50
+    assert all(row["review_status"] == "pending" for row in rows)
+    assert all(row["reviewer"] == "" for row in rows)
+    assert all(row["reviewed_at_utc"] == "" for row in rows)
+
+
+def test_silver_audit_preserves_explicit_answerable_approvals() -> None:
+    with Path("evaluation/silver_audit.csv").open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as source:
+        rows = list(csv.DictReader(source))
+
+    answerable = [row for row in rows if row["answerable"] == "true"]
+    unanswerable = [row for row in rows if row["answerable"] == "false"]
+    assert len(answerable) == len(unanswerable) == 10
+    assert all(row["review_status"] == "approved" for row in answerable)
+    assert all(row["review_notes"] == "" for row in answerable)
+    assert all(row["reviewer"] == "berksankir" for row in answerable)
+    timestamps = [
+        datetime.fromisoformat(row["reviewed_at_utc"].replace("Z", "+00:00"))
+        for row in answerable
+    ]
+    assert all(
+        (later - earlier).total_seconds() == 10
+        for earlier, later in zip(timestamps, timestamps[1:])
+    )
+    assert all(row["review_status"] == "pending" for row in unanswerable)
+    assert all(row["reviewer"] == "" for row in unanswerable)
+    assert all(row["reviewed_at_utc"] == "" for row in unanswerable)

@@ -241,11 +241,12 @@ edilmez. Silver hiçbir yerde human-reviewed veya gold olarak sunulmamalıdır.
 İnceleme yükünü azaltan `evaluation/silver_audit.csv`, 10 unanswerable kaydın
 tamamını ve dokuz belgenin her birini temsil edecek şekilde seçilmiş 10 answerable
 kaydı içerir. Ek answerable kota, en çok adayı bulunan belgeye deterministik olarak
-verilir; seçim retrieval sonuçlarından türetilmez. Audit'teki 20 kayıt da başlangıçta
-`pending` durumundadır. Yirmi kaydın tamamı sorunsuz `approved` olduğunda silver
-set “human-audited sample” olarak tanımlanabilir; yine de “human-reviewed gold”
-olmaz. Audit bir sorun bulursa silver provisional kalır ve ilgili aday ayrıca
-düzeltilmelidir.
+verilir; seçim retrieval sonuçlarından türetilmez. On answerable kayıt kullanıcı
+tarafından `berksankir` reviewer kimliğiyle `approved` olarak işaretlenmiştir;
+10 unanswerable kayıt henüz `pending` durumundadır. Yirmi kaydın tamamı sorunsuz
+`approved` olduğunda silver set “human-audited sample” olarak tanımlanabilir;
+yine de “human-reviewed gold” olmaz. Audit bir sorun bulursa silver provisional
+kalır ve ilgili aday ayrıca düzeltilmelidir.
 
 Tam gold incelemesi için `evaluation/review.csv` içindeki 50 kayıt korunur ve
 başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status`,
