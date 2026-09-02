@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -99,7 +100,7 @@ def test_committed_generation_benchmark_is_self_describing_silver() -> None:
         )
     )
 
-    assert report["schema_version"] == 2
+    assert report["schema_version"] == 3
     assert report["dataset"]["kind"] == "silver"
     assert report["dataset"]["creation_method"] == "ai_assisted"
     assert report["dataset"]["dataset_release_approved"] is True
@@ -109,11 +110,25 @@ def test_committed_generation_benchmark_is_self_describing_silver() -> None:
     assert report["dataset"]["human_reviewed"] is False
     assert report["protocol"]["test_used_for_model_or_threshold_selection"] is False
     assert report["protocol"]["llm_as_a_judge"] is False
+    assert report["protocol"]["generator_output_schema_version"] == "1.1"
+    assert report["protocol"]["llama_cpp_response_format"]["schema_location"] == (
+        "top-level json_schema"
+    )
     assert report["runtime"]["generator_start_count"] == 1
     assert report["models"]["generator"]["model_size_bytes"] == 1_117_320_736
     assert len(report["models"]["generator"]["runtime_sha256"]) == 64
     assert len(report["queries"]) == 100
     assert _aggregate(report["queries"]) == report["summary"]
+
+
+def test_phase8_baseline_is_preserved_byte_for_byte() -> None:
+    baseline = Path(
+        "evaluation/results/silver/phase8_baseline/generation_benchmark.json"
+    ).read_bytes()
+
+    assert hashlib.sha256(baseline).hexdigest() == (
+        "2db9db2ffca6743c76ee678bf3739a263fd5b6770fa289f9bb06f791e07bf8a2"
+    )
 
 
 def test_committed_generation_citations_are_retrieved_and_abstentions_are_empty() -> None:
@@ -131,6 +146,16 @@ def test_committed_generation_citations_are_retrieved_and_abstentions_are_empty(
         else:
             assert row["citations"]
             assert all(citation["chunk_id"] in retrieved for citation in row["citations"])
+    diagnostics = [row["generation_error"] for row in report["queries"] if row["generation_error"]]
+    assert len(diagnostics) == 10
+    assert {item["category"] for item in diagnostics} == {
+        "invalid_json_syntax",
+        "invalid_context_id",
+    }
+    assert all(
+        item["debug_excerpt"] is None or len(item["debug_excerpt"]) <= 240
+        for item in diagnostics
+    )
 
 
 def test_generation_markdown_reports_separated_latency_and_limitations() -> None:

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "dataset": {
     "provenance_schema_version": 1,
     "kind": "silver",
@@ -46,18 +46,25 @@
     "test_used_for_model_or_threshold_selection": false,
     "llm_as_a_judge": false,
     "citation_accuracy": "successful answer citation must match expected trusted document/page and contain the exact source span after whitespace/case normalization",
-    "key_fact_coverage": "deterministic mean reference-fact token recall"
+    "key_fact_coverage": "deterministic mean reference-fact token recall",
+    "generator_output_schema_version": "1.1",
+    "llama_cpp_response_format": {
+      "runtime_release": "b10621",
+      "type": "json_object",
+      "schema_location": "top-level json_schema",
+      "documentation": "https://github.com/ggml-org/llama.cpp/blob/b10621/tools/server/README.md"
+    }
   },
   "runtime": {
-    "started_at_utc": "2026-09-02T10:46:06.274403Z",
-    "finished_at_utc": "2026-09-02T11:06:32.858406Z",
-    "initialization_seconds": 9.913136299990583,
-    "benchmark_seconds": 1216.4314377000264,
+    "started_at_utc": "2026-09-02T14:01:52.630573Z",
+    "finished_at_utc": "2026-09-02T14:21:32.866139Z",
+    "initialization_seconds": 6.743443799990928,
+    "benchmark_seconds": 1173.2129883999878,
     "generator_start_count": 1,
-    "current_python_rss_bytes": 286777344,
-    "peak_python_rss_bytes": 753774592,
-    "peak_llama_server_rss_bytes": 1915269120,
-    "approximate_peak_process_tree_rss_bytes": 2669043712
+    "current_python_rss_bytes": 336859136,
+    "peak_python_rss_bytes": 868462592,
+    "peak_llama_server_rss_bytes": 2060308480,
+    "approximate_peak_process_tree_rss_bytes": 2928771072
   },
   "models": {
     "embedding": {
@@ -80,6 +87,7 @@
       "quantization": "Q4_K_M",
       "runtime": "llama.cpp-b10621",
       "runtime_sha256": "0e8b65e650e369f70f8307d890508886f171ef4fb00facccddd4a1b7ffdaca51",
+      "runtime_size_bytes": 18068018,
       "context_window_tokens": 2560,
       "max_output_tokens": 160,
       "seed": 42,
@@ -109,9 +117,9 @@
         "key_fact_coverage": 0.3327380952380952,
         "latency_ms": {
           "retrieval": {
-            "mean": 160.76255000079982,
-            "p50": 136.46710000466555,
-            "p95": 407.6525999989826
+            "mean": 67.43458999262657,
+            "p50": 43.5482999891974,
+            "p95": 272.03159997588955
           },
           "reranking": {
             "mean": 0.0,
@@ -119,14 +127,14 @@
             "p95": 0.0
           },
           "generation": {
-            "mean": 11605.087270005606,
-            "p50": 12631.577200023457,
-            "p95": 19497.111000004224
+            "mean": 11577.751299997908,
+            "p50": 12439.38190001063,
+            "p95": 20218.901699990965
           },
           "total": {
-            "mean": 11773.467649993836,
-            "p50": 12725.812999997288,
-            "p95": 19668.506699992577
+            "mean": 11650.482179998653,
+            "p50": 12480.416699982015,
+            "p95": 20274.831999995513
           }
         }
       },
@@ -148,24 +156,24 @@
         "key_fact_coverage": 0.42806122448979594,
         "latency_ms": {
           "retrieval": {
-            "mean": 69.25023000803776,
-            "p50": 51.67869999422692,
-            "p95": 263.34820000920445
+            "mean": 90.12838999915402,
+            "p50": 55.75010000029579,
+            "p95": 365.9336999990046
           },
           "reranking": {
-            "mean": 1324.5844400051283,
-            "p50": 1245.2572000038344,
-            "p95": 2011.1368999932893
+            "mean": 1921.1889899976086,
+            "p50": 1809.2459999897983,
+            "p95": 2457.6519999827724
           },
           "generation": {
-            "mean": 7570.816910002031,
-            "p50": 8356.977999996161,
-            "p95": 19773.64800000214
+            "mean": 7525.042530000792,
+            "p50": 7762.77959998697,
+            "p95": 17879.368599998998
           },
           "total": {
-            "mean": 10045.76711000118,
-            "p50": 9772.391100006644,
-            "p95": 21495.58829999296
+            "mean": 10358.204490001663,
+            "p50": 9564.251700008754,
+            "p95": 20847.27140000905
           }
         }
       }
@@ -189,9 +197,9 @@
         "key_fact_coverage": 0.40595238095238095,
         "latency_ms": {
           "retrieval": {
-            "mean": 103.24582000175724,
-            "p50": 117.197399988072,
-            "p95": 169.09109998960048
+            "mean": 58.80509999988135,
+            "p50": 51.70199999702163,
+            "p95": 98.75340000144206
           },
           "reranking": {
             "mean": 0.0,
@@ -199,14 +207,14 @@
             "p95": 0.0
           },
           "generation": {
-            "mean": 16155.878827501874,
-            "p50": 15226.267299993197,
-            "p95": 28507.472700002836
+            "mean": 16181.062559998827,
+            "p50": 15556.314299989026,
+            "p95": 30117.14670000947
           },
           "total": {
-            "mean": 16266.950805004308,
-            "p50": 15371.841400017729,
-            "p95": 28558.64329999895
+            "mean": 16246.234802498657,
+            "p50": 15633.493000001181,
+            "p95": 30182.1334999986
           }
         }
       },
@@ -228,24 +236,24 @@
         "key_fact_coverage": 0.38979591836734695,
         "latency_ms": {
           "retrieval": {
-            "mean": 63.88844000030076,
-            "p50": 42.850099998759106,
-            "p95": 140.17450000392273
+            "mean": 40.799612498813076,
+            "p50": 40.34529998898506,
+            "p95": 52.37030002172105
           },
           "reranking": {
-            "mean": 1931.1429425004462,
-            "p50": 1431.2195999955293,
-            "p95": 3355.3426999715157
+            "mean": 1504.1930650018912,
+            "p50": 1410.8648000110406,
+            "p95": 2106.0061999887694
           },
           "generation": {
-            "mean": 6688.244034999661,
-            "p50": 3297.806800022954,
-            "p95": 21427.742300002137
+            "mean": 6032.368087500072,
+            "p50": 3279.8135000048205,
+            "p95": 17518.259699980263
           },
           "total": {
-            "mean": 8687.431642498996,
-            "p50": 5864.267299999483,
-            "p95": 24577.98509998247
+            "mean": 7580.5583024986845,
+            "p50": 5179.854699992575,
+            "p95": 18849.148199980846
           }
         }
       }
@@ -269,9 +277,9 @@
         "key_fact_coverage": 0.39012226512226517,
         "latency_ms": {
           "retrieval": {
-            "mean": 114.74916600156575,
-            "p50": 121.87980001908727,
-            "p95": 173.50969999097288
+            "mean": 60.530997998430394,
+            "p50": 49.758799985283986,
+            "p95": 99.77430000435561
           },
           "reranking": {
             "mean": 0.0,
@@ -279,14 +287,14 @@
             "p95": 0.0
           },
           "generation": {
-            "mean": 15245.72051600262,
-            "p50": 15154.41610000562,
-            "p95": 28507.472700002836
+            "mean": 15260.400307998643,
+            "p50": 15141.741100000218,
+            "p95": 30117.14670000947
           },
           "total": {
-            "mean": 15368.254174002213,
-            "p50": 15281.2676000176,
-            "p95": 28558.64329999895
+            "mean": 15327.084277998656,
+            "p50": 15190.356500010239,
+            "p95": 30182.1334999986
           }
         }
       },
@@ -308,24 +316,24 @@
         "key_fact_coverage": 0.3974489795918367,
         "latency_ms": {
           "retrieval": {
-            "mean": 64.96079800184816,
-            "p50": 43.16699999617413,
-            "p95": 164.68999997596256
+            "mean": 50.665367998881266,
+            "p50": 42.87159998784773,
+            "p95": 67.81199999386445
           },
           "reranking": {
-            "mean": 1809.8312420013826,
-            "p50": 1389.2669000197202,
-            "p95": 3355.3426999715157
+            "mean": 1587.5922500010347,
+            "p50": 1579.0565999923274,
+            "p95": 2198.3525999821723
           },
           "generation": {
-            "mean": 6864.758610000135,
-            "p50": 4128.98189999396,
-            "p95": 21427.742300002137
+            "mean": 6330.902976000216,
+            "p50": 3627.2103999799583,
+            "p95": 17879.368599998998
           },
           "total": {
-            "mean": 8959.098735999432,
-            "p50": 6155.047800013563,
-            "p95": 24577.98509998247
+            "mean": 8136.08753999928,
+            "p50": 5480.431499978295,
+            "p95": 19698.179200000595
           }
         }
       }
@@ -341,6 +349,7 @@
       "answer": "Mütevelli Heyet",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -632,10 +641,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 407.6525999989826,
+        "retrieval": 272.03159997588955,
         "reranking": 0.0,
-        "generation": 13677.768700028537,
-        "total": 14092.662199982442
+        "generation": 13048.072400008095,
+        "total": 13323.550900007831
       }
     },
     {
@@ -647,6 +656,7 @@
       "answer": "TGY'de bir akademik yıl, her biri en az 14 haftalık sonbahar ve ilkbahar dönemlerinden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -938,10 +948,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 126.2468000059016,
+        "retrieval": 43.5482999891974,
         "reranking": 0.0,
-        "generation": 8295.095300010871,
-        "total": 8429.255299997749
+        "generation": 8186.358599981759,
+        "total": 8235.330700001214
       }
     },
     {
@@ -953,6 +963,7 @@
       "answer": "Bir akademik yıl, her biri ondört haftalık sonbahar ve ilkbahar dönemlerinden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -1244,10 +1255,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 107.34509999747388,
+        "retrieval": 42.0344999874942,
         "reranking": 0.0,
-        "generation": 10169.998299999861,
-        "total": 10283.634399995208
+        "generation": 9667.257099994458,
+        "total": 9713.369200006127
       }
     },
     {
@@ -1259,6 +1270,7 @@
       "answer": "Öğrenim dili, bir lisansüstü programı sırasında verilen derslerin dili olarak belirlenir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -1550,10 +1562,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 88.8734000036493,
+        "retrieval": 36.17909998865798,
         "reranking": 0.0,
-        "generation": 12631.577200023457,
-        "total": 12725.812999997288
+        "generation": 12439.38190001063,
+        "total": 12480.416699982015
       }
     },
     {
@@ -1565,6 +1577,7 @@
       "answer": "Nanotanı Merkezinin araştırma ve teknoloji geliştirme amaçları arasında veri analitiği alanında ileri düzeyde bilimsel araştırmalar yapmak ve teknoloji geliştirmek yer alır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -1856,10 +1869,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 151.65340001112781,
+        "retrieval": 40.91099998913705,
         "reranking": 0.0,
-        "generation": 16342.635200009681,
-        "total": 16504.280099994503
+        "generation": 16034.883999993326,
+        "total": 16080.946300004143
       }
     },
     {
@@ -1871,6 +1884,7 @@
       "answer": "Toplumsal cinsiyet ve kadın çalışmaları alanlarında, toplumsal cinsiyet eşitliği anlayışının tüm politika ve programlara yerleşmesine katkı sağlamak, bilgi üretmek ve toplumsal cinsiyet eşitliği konusunda farkındalığı ve duyarlılığı arttırmak için eğitim ve bilinç arttırıcı faaliyetlerde bulunmak.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -2162,10 +2176,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 144.40079999621958,
+        "retrieval": 43.28759998315945,
         "reranking": 0.0,
-        "generation": 18446.865899983095,
-        "total": 18601.359699998284
+        "generation": 19254.671300004702,
+        "total": 19304.09089999739
       }
     },
     {
@@ -2177,6 +2191,7 @@
       "answer": "Veri analitiği merkezinin temel bilimsel ve teknolojik amacı, ileri düzeyde bilimsel araştırmalar yapmak ve teknoloji geliştirmek, disiplinler arası düzeyde disiplinler arasında ortak çalışmalar yapmak, uzman araştırma görevlileri yetiştirmek, sanayi, üniversite ve diğer araştırma kurumlarının işbirliği yapmasını sağlamak ve endüstriyel araştırmalar konusunda deneyimli personel yetiştirmek.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -2468,10 +2483,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 163.37019999627955,
+        "retrieval": 48.89460001140833,
         "reranking": 0.0,
-        "generation": 19497.111000004224,
-        "total": 19668.506699992577
+        "generation": 20218.901699990965,
+        "total": 20274.831999995513
       }
     },
     {
@@ -2483,6 +2498,7 @@
       "answer": "İhale komisyonunda en az iki kişinin katılmasıyla kurulacak komisyonları görevlendirilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -2774,10 +2790,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 173.50969999097288,
+        "retrieval": 51.44020001171157,
         "reranking": 0.0,
-        "generation": 16989.821099996334,
-        "total": 17170.822500018403
+        "generation": 16927.985999995144,
+        "total": 16985.662699997192
       }
     },
     {
@@ -2789,6 +2805,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -3071,10 +3088,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 136.46710000466555,
+        "retrieval": 46.08539998298511,
         "reranking": 0.0,
         "generation": 0.0,
-        "total": 143.0957999837119
+        "total": 50.77790000359528
       }
     },
     {
@@ -3086,6 +3103,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -3368,10 +3386,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 108.10640000272542,
+        "retrieval": 49.933600006625056,
         "reranking": 0.0,
         "generation": 0.0,
-        "total": 115.24679997819476
+        "total": 55.8444999915082
       }
     },
     {
@@ -3383,6 +3401,7 @@
       "answer": "Mütevelli Heyet en fazla on bir üyeden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -3674,10 +3693,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 79.82179999817163,
+        "retrieval": 46.00719999871217,
         "reranking": 0.0,
-        "generation": 14304.629299993394,
-        "total": 14390.950200002408
+        "generation": 14230.293500004336,
+        "total": 14282.207199983532
       }
     },
     {
@@ -3689,6 +3708,7 @@
       "answer": "Mütevelli Heyet yılda en az dört defa toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -3980,10 +4000,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 130.86840001051314,
+        "retrieval": 42.56299999542534,
         "reranking": 0.0,
-        "generation": 15757.242699997732,
-        "total": 15900.54629999213
+        "generation": 15141.741100000218,
+        "total": 15190.356500010239
       }
     },
     {
@@ -3994,7 +4014,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_context_id",
+      "generation_error": {
+        "category": "invalid_context_id",
+        "validation_summary": "generator selected 1 untrusted context id(s)",
+        "debug_excerpt": null,
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -4277,10 +4303,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 169.4992000120692,
+        "retrieval": 62.67439998919144,
         "reranking": 0.0,
-        "generation": 18529.679700004635,
-        "total": 18706.188800017117
+        "generation": 17566.305999993347,
+        "total": 17635.527100006584
       }
     },
     {
@@ -4292,6 +4318,7 @@
       "answer": "Genel Sekreterin atanması ve görevden alınması Rektörün önerisi ve Mütevelli Heyetin kararı ile olur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -4583,10 +4610,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 142.32189999893308,
+        "retrieval": 45.08640000130981,
         "reranking": 0.0,
-        "generation": 15651.236900012009,
-        "total": 15802.375400002347
+        "generation": 16436.797800008208,
+        "total": 16488.292900001397
       }
     },
     {
@@ -4598,6 +4625,7 @@
       "answer": "ELAE sonuçları iki yıl süresince geçerlidir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -4889,10 +4917,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 125.53889999981038,
+        "retrieval": 44.41539998515509,
         "reranking": 0.0,
-        "generation": 15575.971900019795,
-        "total": 15716.413299989654
+        "generation": 15097.360899992054,
+        "total": 15149.233499978436
       }
     },
     {
@@ -4904,6 +4932,7 @@
       "answer": "TGY'de sunulan derslerin kredi durumu, derslerin kredi değerleri olmamasıdır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -5195,10 +5224,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 121.73350001103245,
+        "retrieval": 47.63799998909235,
         "reranking": 0.0,
-        "generation": 11801.783100003377,
-        "total": 11933.06740000844
+        "generation": 9913.406599982409,
+        "total": 9967.621999996481
       }
     },
     {
@@ -5210,6 +5239,7 @@
       "answer": "NA notu (devamsız) derslerin kredi eşdeğerliği ve notların intibakı ilgili enstitü yönetim kurulu tarafından yapılır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -5501,10 +5531,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 117.197399988072,
+        "retrieval": 43.75620000064373,
         "reranking": 0.0,
-        "generation": 15154.41610000562,
-        "total": 15281.2676000176
+        "generation": 13301.397500006715,
+        "total": 13352.599499979988
       }
     },
     {
@@ -5516,6 +5546,7 @@
       "answer": "Öğrenim dili, özellikle lisans eğitiminde, İngilizce olarak belirlenir. Ancak, Akademik Kurulu tarafından onaylanan dersler Türkçe olarak verilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -5807,10 +5838,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 129.89640000159852,
+        "retrieval": 51.70199999702163,
         "reranking": 0.0,
-        "generation": 9949.09710000502,
-        "total": 10088.776899996446
+        "generation": 9095.76319999178,
+        "total": 9153.18870000192
       }
     },
     {
@@ -5822,6 +5853,7 @@
       "answer": "Ön koşulu bulunan bir lisans dersini alabilmek için ön koşul dersinin başarılmış olması ya da dersi veren öğretim üyesinin onayı gerekir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -6113,10 +6145,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 129.9124000070151,
+        "retrieval": 54.673600010573864,
         "reranking": 0.0,
-        "generation": 13568.813000019873,
-        "total": 13705.754299997352
+        "generation": 13985.470199986594,
+        "total": 14046.301499998663
       }
     },
     {
@@ -6128,6 +6160,7 @@
       "answer": "Not ortalamasına dâhil edilen dersler için en az geçer not \"D\", not ortalamasına dahil edilmeyen dersler için ise \"S\"'dir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -6419,10 +6452,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 155.79540000180714,
+        "retrieval": 49.50210000970401,
         "reranking": 0.0,
-        "generation": 17880.626199999824,
-        "total": 18046.153300005244
+        "generation": 17794.583799986867,
+        "total": 17851.01380001288
       }
     },
     {
@@ -6434,6 +6467,7 @@
       "answer": "En fazla bir çift anadal diploma programına kaydolabilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -6725,10 +6759,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 137.5363999977708,
+        "retrieval": 50.38749999948777,
         "reranking": 0.0,
-        "generation": 15226.267299993197,
-        "total": 15371.841400017729
+        "generation": 14271.411800000351,
+        "total": 14327.834099996835
       }
     },
     {
@@ -6740,6 +6774,7 @@
       "answer": "İzin başvurusu, en geç derslerin başlamasını takip eden dördüncü haftanın son iş gününe kadar yapar.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -7031,10 +7066,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 164.19790001236834,
+        "retrieval": 80.31429999391548,
         "reranking": 0.0,
-        "generation": 17186.743700003717,
-        "total": 17358.595800003968
+        "generation": 17979.18200001004,
+        "total": 18066.847899986897
       }
     },
     {
@@ -7046,6 +7081,7 @@
       "answer": "14 haftalık sonbahar ve ilkbahar dönemleri en az 14 haftadır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -7337,10 +7373,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 151.61600001738407,
+        "retrieval": 27.028299984522164,
         "reranking": 0.0,
-        "generation": 10375.006499991287,
-        "total": 10535.294899978908
+        "generation": 11446.146400005091,
+        "total": 11479.461499984609
       }
     },
     {
@@ -7352,6 +7388,7 @@
       "answer": "En az %15'ine öğrenim ücreti muafiyeti (%100) sağlanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -7643,10 +7680,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 158.2483000238426,
+        "retrieval": 70.50359999993816,
         "reranking": 0.0,
-        "generation": 14757.574100018246,
-        "total": 14923.44540002523
+        "generation": 15556.314299989026,
+        "total": 15633.493000001181
       }
     },
     {
@@ -7658,6 +7695,7 @@
       "answer": "Yüksek lisans ve doktora programlarına kabul için gerekli olan diplomalar şunlardır:\n\n1. Lisans diploması\n2. Tezli yüksek lisans diploması\n3. Doktora diploması\n\nBu diplomalar, adayların başvurularını değerlendirmek ve program kabul etme kararını onaylamak için gereklidir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -7949,10 +7987,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 150.91960001154803,
+        "retrieval": 47.089300001971424,
         "reranking": 0.0,
-        "generation": 26562.650800013216,
-        "total": 26723.34190001129
+        "generation": 26425.606999982847,
+        "total": 26479.630799993174
       }
     },
     {
@@ -7964,6 +8002,7 @@
       "answer": "Sabancı Üniversitesi mezunları mezuniyetten sonra İngilizce yeterliliklerini takiben iki yıl süresince sağlamış kabul edilirler.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -8255,10 +8294,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 153.10080000199378,
+        "retrieval": 70.14379999600351,
         "reranking": 0.0,
-        "generation": 18024.191700009396,
-        "total": 18187.621399993077
+        "generation": 17079.586200008634,
+        "total": 17156.836599984672
       }
     },
     {
@@ -8270,6 +8309,7 @@
       "answer": "Tezli yüksek lisans programının normal süresi dört dönemdir, azami süresi ise on iki dönemdir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -8561,10 +8601,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 130.42929998482578,
+        "retrieval": 45.1871000113897,
         "reranking": 0.0,
-        "generation": 13973.576599993976,
-        "total": 14114.246000011917
+        "generation": 14639.582699979655,
+        "total": 14691.785799979698
       }
     },
     {
@@ -8576,6 +8616,7 @@
       "answer": "Doktora yeterlik sınavına bir yılda en fazla iki kez girebilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -8867,10 +8908,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 169.09109998960048,
+        "retrieval": 56.50410000816919,
         "reranking": 0.0,
-        "generation": 16389.110899996012,
-        "total": 16567.230800021207
+        "generation": 17203.235699998913,
+        "total": 17266.27219998045
       }
     },
     {
@@ -8882,6 +8923,7 @@
       "answer": "Merkezin yönetim organları şunlardır:\n\na) Müdür.\n\nb) Yönetim Kurulu.\n\nc) Danışma Kurulu.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -9173,10 +9215,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 146.45020000170916,
+        "retrieval": 38.922499981708825,
         "reranking": 0.0,
-        "generation": 9956.878199998755,
-        "total": 10110.031299991533
+        "generation": 8249.495100026252,
+        "total": 8292.896900005871
       }
     },
     {
@@ -9188,6 +9230,7 @@
       "answer": "Danışma Kurulu yılda en az bir defa müdürün çağırısıyla üye tam sayısının salt çoğunluğuyla toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -9479,10 +9522,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 129.4130999885965,
+        "retrieval": 42.07419999875128,
         "reranking": 0.0,
-        "generation": 17375.872000004165,
-        "total": 17514.92169999983
+        "generation": 15663.25670000515,
+        "total": 15711.40070000547
       }
     },
     {
@@ -9494,6 +9537,7 @@
       "answer": "Toplumsal cinsiyet ve kadın çalışmaları alanlarında bulunan bilimsel etkinlikler, toplumsal cinsiyet eşitliği anlayışının tüm politika ve programlara yerleşmesine katkı sağlamak, bilgi üretmek ve toplumsal cinsiyet eşitliği konusunda farkındalığı ve duyarlılığı arttırmak için eğitim ve bilinç arttırıcı faaliyetlerde bulunmak gibi amaçları doğrultusunda çalışır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -9785,10 +9829,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 102.45160001795739,
+        "retrieval": 49.758799985283986,
         "reranking": 0.0,
-        "generation": 24589.813500002492,
-        "total": 24702.67880000756
+        "generation": 21060.631100001046,
+        "total": 21118.370000011055
       }
     },
     {
@@ -9800,6 +9844,7 @@
       "answer": "Müdür, toplumsal cinsiyet ve kadın çalışmaları konusunda eğitimi veya çalışmaları olan\nÜniversitenin tam zamanlı öğretim üyeleri arasından Rektörün önerisi üzerine Mütevelli Heyeti tarafından üç yıl için görevlendirilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -10091,10 +10136,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 56.44310000934638,
+        "retrieval": 99.77430000435561,
         "reranking": 0.0,
-        "generation": 19761.94990001386,
-        "total": 19823.68579998729
+        "generation": 22981.789200013736,
+        "total": 23092.855599999893
       }
     },
     {
@@ -10106,6 +10151,7 @@
       "answer": "Müdür, veri analitiği konusunda eğitimi veya çalışmaları olan Üniversitenin tam zamanlı öğretim üyeleri arasından Rektörün önerisi üzerine Mütevelli Heyeti tarafından üç yıl için görevlendirilir. Süresi biten Müdür yeniden görevlendirilebilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -10397,10 +10443,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 52.024400007212535,
+        "retrieval": 41.271000023698434,
         "reranking": 0.0,
-        "generation": 19837.319900019793,
-        "total": 19896.559900022112
+        "generation": 19857.644899981096,
+        "total": 19905.000500002643
       }
     },
     {
@@ -10412,6 +10458,7 @@
       "answer": "Danışma Kurulu, üniversite konuyla ilgili fakülte ve anabilim dalları, istekleri halinde ulusal ve uluslararası üniversiteler, enstitüler, araştırma merkezlerinde görevli öğretim elemanları ile veri analitiği alanında araştırma ve üretim yapan yerli-yabancı özel sektör kuruluşlarında çalışan ve/veya veri analitiği konusunda tecrübeli kişiler arasından Yönetim Kurulunun önerisiyle Mütevelli Heyeti tarafından görevlendirilen yedi kişiden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -10703,10 +10750,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 44.05270001734607,
+        "retrieval": 35.03080000518821,
         "reranking": 0.0,
-        "generation": 23575.61529998202,
-        "total": 23626.24290000531
+        "generation": 24335.996499983594,
+        "total": 24376.164199988125
       }
     },
     {
@@ -10717,7 +10764,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Merkezin araştırma ve teknoloji geliştirme alanlarından üçü şunlardır:\\n\\na) ıleri kompozit malzemeler, polimer işleme süreçleri, nano ve makro üretim, eklemeli imalat ve üç boyutlu basım teknolojileri alanlarında ileri düzeyd…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -11000,10 +11053,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 83.9579000021331,
+        "retrieval": 58.472299977438524,
         "reranking": 0.0,
-        "generation": 33188.432099996135,
-        "total": 33280.685400008224
+        "generation": 30117.14670000947,
+        "total": 30182.1334999986
       }
     },
     {
@@ -11014,7 +11067,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Tümleştirilmiş Üretim Teknolojileri Merkezi Yönetim Kurulu, Merkezin faaliyet alanlarında aktif çalışmaları bulunan Sabancı Üniversitesi tam zamanlı öğretim üyeleri, gerek duyulması halinde ulusal ve uluslararası üniversiteler…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -11297,10 +11356,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 39.81250000651926,
+        "retrieval": 40.3721000184305,
         "reranking": 0.0,
-        "generation": 26590.98399998038,
-        "total": 26637.681899999734
+        "generation": 27561.265700001968,
+        "total": 27607.12910001166
       }
     },
     {
@@ -11312,6 +11371,7 @@
       "answer": "Danışma Kurulu yılda en az dört defa toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "tumlesik-uretim-teknolojileri-merkezi-yonetmeligi",
@@ -11603,10 +11663,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 33.825799997430295,
+        "retrieval": 35.19279998727143,
         "reranking": 0.0,
-        "generation": 12257.873900001869,
-        "total": 12297.27670000284
+        "generation": 12019.969700020738,
+        "total": 12059.913500008406
       }
     },
     {
@@ -11618,6 +11678,7 @@
       "answer": "İhaleye katılamayacaklar",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -11909,10 +11970,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 72.53949998994358,
+        "retrieval": 56.310599989956245,
         "reranking": 0.0,
-        "generation": 14632.523799984483,
-        "total": 14711.524800019106
+        "generation": 16093.265699979383,
+        "total": 16154.835900000762
       }
     },
     {
@@ -11924,6 +11985,7 @@
       "answer": "Açık ihale usulü, tüm isteklilerin teklif verebildiği usulüdür.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -12215,10 +12277,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 42.34719998203218,
+        "retrieval": 48.31099999137223,
         "reranking": 0.0,
-        "generation": 12739.896299986867,
-        "total": 12790.049500006717
+        "generation": 13468.910600000527,
+        "total": 13522.31220001704
       }
     },
     {
@@ -12230,6 +12292,7 @@
       "answer": "Geçici teminat teklif bedelinin %3'ün %6'ından fazla olmamak üzere isteklilerden alınabilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -12521,10 +12584,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 58.67040000157431,
+        "retrieval": 60.678300011204556,
         "reranking": 0.0,
-        "generation": 13190.733099996578,
-        "total": 13254.594199999701
+        "generation": 14004.96639998164,
+        "total": 14070.518799999263
       }
     },
     {
@@ -12536,6 +12599,7 @@
       "answer": "İhale, değerlendirme sonucunda ekonomik açıdan en avantajlı teklifi veren isteklinin üzerinde bırakılır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -12827,10 +12891,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 45.4565999971237,
+        "retrieval": 64.66180001734756,
         "reranking": 0.0,
-        "generation": 16941.368100000545,
-        "total": 16992.895000003045
+        "generation": 17692.049700010102,
+        "total": 17763.434899999993
       }
     },
     {
@@ -12842,6 +12906,7 @@
       "answer": "İtiraz edilebilir aday veya istekliler, ihale sürecindeki işlem ya da eylemlerin hukuka aykırılığı iddiasıyla ihalenin sona erdiği tarihten beş iş günü içinde Üniversiteye itiraz edebilirler.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -13133,10 +13198,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 55.18490000395104,
+        "retrieval": 69.97660000342876,
         "reranking": 0.0,
-        "generation": 12769.734700006666,
-        "total": 12830.757599993376
+        "generation": 13282.798900007037,
+        "total": 13359.781899984227
       }
     },
     {
@@ -13148,6 +13213,7 @@
       "answer": "Sabancı Üniversitesi kütüphanesi 1 Eylül 2026 tarihinde saat 17:00 kapanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -13439,10 +13505,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 57.83149998751469,
+        "retrieval": 64.66590001946315,
         "reranking": 0.0,
-        "generation": 9585.793799982639,
-        "total": 9647.391400008928
+        "generation": 9930.33239999204,
+        "total": 10000.21120000747
       }
     },
     {
@@ -13454,6 +13520,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -13736,10 +13803,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 38.60460000578314,
+        "retrieval": 53.16329997731373,
         "reranking": 0.0,
         "generation": 0.0,
-        "total": 41.91999998874962
+        "total": 57.45039999601431
       }
     },
     {
@@ -13750,7 +13817,13 @@
       "answerable": false,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Öğrenci spor merkezi üyelik ücreti 2026 sonbahar döneminde 7 haftalık yaz dönemi için derslerin başlamasını takip eden dördüncü haftanın son iş gününe kadar üniversiteden ayrılma, 7 haftalık yaz dönemi için ders ekleme bırakma…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -14033,10 +14106,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 44.33829998015426,
+        "retrieval": 51.7896999954246,
         "reranking": 0.0,
-        "generation": 28507.472700002836,
-        "total": 28558.64329999895
+        "generation": 30235.342700005276,
+        "total": 30292.75210000924
       }
     },
     {
@@ -14048,6 +14121,7 @@
       "answer": "Danışma Kurulu ve Yönetim Kurulu",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -14339,10 +14413,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 45.3914999961853,
+        "retrieval": 80.48200001940131,
         "reranking": 0.0,
-        "generation": 13042.957500001648,
-        "total": 13093.728600011673
+        "generation": 15971.606700011762,
+        "total": 16058.702300011646
       }
     },
     {
@@ -14353,7 +14427,13 @@
       "answerable": false,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 3, column 2",
+        "debug_excerpt": "{ \"answer\": \"2020-2021 akademik yılı öncesinde Üniversiteye kayıt olmuş öğrenciler; derslerin başlamasını takip eden 4 üncü haftanın son iş gününe kadar izin başvurusu yapar ve başvuruları kabul edilirse izinlerinin işleme alınabilmesi içi…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -14636,10 +14716,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 37.404000002425164,
+        "retrieval": 207.70890000858344,
         "reranking": 0.0,
-        "generation": 32001.46540001151,
-        "total": 32045.59940000763
+        "generation": 36580.164599989075,
+        "total": 36794.12829998182
       }
     },
     {
@@ -14651,6 +14731,7 @@
       "answer": "2026-2027 güz dönemi lisans final sınavları 2026-2027 akademik yılı güz ve bahar dönemleri için yapılan izin başvurularında belirtilen tarihe kadar olmak üzere belirlediği I notu dönüşüm tarihlerini, karar ile Öğrenci Kaynakları Birimine iletir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -14942,10 +15023,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 121.87980001908727,
+        "retrieval": 52.180300001055,
         "reranking": 0.0,
-        "generation": 25019.8513000214,
-        "total": 25150.098200014327
+        "generation": 20971.682400006102,
+        "total": 21030.794499994954
       }
     },
     {
@@ -14957,6 +15038,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -15239,10 +15321,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 218.87189999688417,
+        "retrieval": 98.75340000144206,
         "reranking": 0.0,
         "generation": 0.0,
-        "total": 227.5177999981679
+        "total": 105.14950001379475
       }
     },
     {
@@ -15254,6 +15336,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -15536,10 +15619,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 85.15659999102354,
+        "retrieval": 67.4771000049077,
         "reranking": 0.0,
         "generation": 0.0,
-        "total": 90.43690000544302
+        "total": 74.9515000206884
       }
     },
     {
@@ -15551,6 +15634,7 @@
       "answer": "Sabancı Üniversitesinin en yüksek karar organu Mütevelli Heyet, en yükseköğrenim görmüş adaylar arasından, dört yıl süre ile Vakıf Yönetim Kurulu tarafından seçilen en az yedi üyeden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -15712,10 +15796,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 59.92360002710484,
-        "reranking": 2011.1368999932893,
-        "generation": 8634.531800023979,
-        "total": 21495.58829999296
+        "retrieval": 94.9345999979414,
+        "reranking": 2457.6519999827724,
+        "generation": 10111.211200011894,
+        "total": 20847.27140000905
       }
     },
     {
@@ -15727,6 +15811,7 @@
       "answer": "TGY'de sonbahar ve ilkbahar dönemlerinin her biri 14 haftadır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -15888,10 +15973,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 263.34820000920445,
-        "reranking": 1134.5482000033371,
-        "generation": 8530.735300009837,
-        "total": 9930.621600011364
+        "retrieval": 365.9336999990046,
+        "reranking": 2123.836199985817,
+        "generation": 9470.223100011935,
+        "total": 11964.081000012811
       }
     },
     {
@@ -15903,6 +15988,7 @@
       "answer": "Bir akademik yıl, her biri en az 14 haftalık sonbahar ve ilkbahar dönemlerinden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -16064,10 +16150,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 35.4949000175111,
-        "reranking": 1296.541400020942,
-        "generation": 6665.480099996785,
-        "total": 7999.638700013747
+        "retrieval": 56.52300000656396,
+        "reranking": 1961.8712000083178,
+        "generation": 7250.130999978865,
+        "total": 9282.57159999339
       }
     },
     {
@@ -16079,6 +16165,7 @@
       "answer": "Öğrenim dili, bir lisansüstü programında kullanılan derslerin dili olarak belirtilir. Bu dili belirleyen bir derslerin dersi, dersin dili olarak belirtilen derslerin dersi ile ilgili bir dersi içerir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -16240,10 +16327,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 29.453200026182458,
-        "reranking": 1085.6724999903236,
-        "generation": 19773.64800000214,
-        "total": 20890.69520001067
+        "retrieval": 45.47039998578839,
+        "reranking": 1622.6292000210378,
+        "generation": 17879.368599998998,
+        "total": 19549.44920001435
       }
     },
     {
@@ -16255,6 +16342,7 @@
       "answer": "Nanotanı için fonksiyonel yüzey ve arayüzeyler geliştirilmesi alanında gerçekleştirilen araştırma/geliştirme faaliyetlerine katkı sağlamak.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -16416,10 +16504,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 51.67869999422692,
-        "reranking": 1073.6065999954008,
-        "generation": 8997.143699991284,
-        "total": 10125.331799994456
+        "retrieval": 55.75010000029579,
+        "reranking": 1637.8274000016972,
+        "generation": 8218.731300003128,
+        "total": 9914.61929999059
       }
     },
     {
@@ -16431,6 +16519,7 @@
       "answer": "Toplumsal cinsiyet ve kadın çalışmaları alanlarında, toplumsal cinsiyet eşitliği anlayışının tüm politika ve programlara yerleşmesine katkı sağlamak, bilgi üretmek ve toplumsal cinsiyet eşitliği konusunda farkındalığı ve duyarlılığı arttırmak için eğitim ve bilinç arttırıcı faaliyetlerde bulunmak.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -16592,10 +16681,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 52.937000000383705,
-        "reranking": 1523.439500015229,
-        "generation": 6243.312300008256,
-        "total": 7822.159100003773
+        "retrieval": 55.430399981560186,
+        "reranking": 2198.3525999821723,
+        "generation": 6258.88930002111,
+        "total": 8515.00099999248
       }
     },
     {
@@ -16607,6 +16696,7 @@
       "answer": "Veri analitiği merkezinin temel bilimsel ve teknolojik amacı, ileri düzeyde bilimsel araştırmalar yapmak ve teknoloji geliştirmek, disiplinler arası düzeyde disiplinler arasında ortak çalışmalar yapmak ve uygulamaların elde edilmesi, uygulamalı araştırmalar aracılığı ile rekabet gücünü arttırmak ve endüstri ve teknolojik gelişmeler yönünde bilgi birikimi sağlamak.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -16768,10 +16858,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 37.79119998216629,
-        "reranking": 1389.2669000197202,
-        "generation": 8506.339899991872,
-        "total": 9935.838799981866
+        "retrieval": 54.789000016171485,
+        "reranking": 1743.2874999940395,
+        "generation": 7762.77959998697,
+        "total": 9564.251700008754
       }
     },
     {
@@ -16782,7 +16872,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_context_id",
+      "generation_error": {
+        "category": "invalid_context_id",
+        "validation_summary": "generator selected 1 untrusted context id(s)",
+        "debug_excerpt": null,
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -16935,10 +17031,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 60.14089999371208,
-        "reranking": 1351.8610000028275,
-        "generation": 8356.977999996161,
-        "total": 9772.391100006644
+        "retrieval": 67.81199999386445,
+        "reranking": 1809.2459999897983,
+        "generation": 8299.091199995019,
+        "total": 10178.262500005076
       }
     },
     {
@@ -16950,6 +17046,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -17102,10 +17199,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 56.28150000120513,
-        "reranking": 1134.5142000063788,
+        "retrieval": 59.82990001211874,
+        "reranking": 1755.3891999996267,
         "generation": 0.0,
-        "total": 1192.3199000011664
+        "total": 1816.5135999734048
       }
     },
     {
@@ -17117,6 +17214,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -17269,10 +17367,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 45.45310002868064,
-        "reranking": 1245.2572000038344,
+        "retrieval": 44.81079999823123,
+        "reranking": 1901.7986000108067,
         "generation": 0.0,
-        "total": 1293.0865999951493
+        "total": 1950.0236000167206
       }
     },
     {
@@ -17284,6 +17382,7 @@
       "answer": "Mütevelli Heyet en fazla on bir üyeden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -17445,10 +17544,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 36.388800013810396,
-        "reranking": 1253.109500015853,
-        "generation": 2357.2687999985646,
-        "total": 3649.916700000176
+        "retrieval": 35.77449999283999,
+        "reranking": 1935.096800007159,
+        "generation": 2407.144500000868,
+        "total": 4381.469500018284
       }
     },
     {
@@ -17460,6 +17559,7 @@
       "answer": "Mütevelli Heyet yılda en az dört defa toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -17621,10 +17721,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 30.333600006997585,
-        "reranking": 1191.8097000161652,
-        "generation": 2447.8055000072345,
-        "total": 3672.719900001539
+        "retrieval": 42.87159998784773,
+        "reranking": 1758.7573000055272,
+        "generation": 2945.0111000041943,
+        "total": 4750.301599997329
       }
     },
     {
@@ -17635,7 +17735,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_context_id",
+      "generation_error": {
+        "category": "invalid_context_id",
+        "validation_summary": "generator selected 1 untrusted context id(s)",
+        "debug_excerpt": null,
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -17788,10 +17894,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 40.02600000239909,
-        "reranking": 1369.1221000044607,
-        "generation": 8198.106000025291,
-        "total": 9609.402900008718
+        "retrieval": 66.17289999849163,
+        "reranking": 2256.4169999968726,
+        "generation": 8353.595099993981,
+        "total": 10679.081000009319
       }
     },
     {
@@ -17803,6 +17909,7 @@
       "answer": "Genel Sekreterin atanması ve görevden alınması Rektörün önerisi ve Mütevelli Heyetin kararı ile olur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -17964,10 +18071,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 40.691500005777925,
-        "reranking": 1508.7538000079803,
-        "generation": 3297.806800022954,
-        "total": 4849.836500012316
+        "retrieval": 52.37030002172105,
+        "reranking": 2089.27239998593,
+        "generation": 3040.9654000250157,
+        "total": 5186.129899986554
       }
     },
     {
@@ -17979,6 +18086,7 @@
       "answer": "ELAE sonuçları iki yıl süresince geçerlidir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -18140,10 +18248,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 33.61360001144931,
-        "reranking": 1364.082199987024,
-        "generation": 2403.857400000561,
-        "total": 3804.731999989599
+        "retrieval": 42.54319999017753,
+        "reranking": 1844.0573000116274,
+        "generation": 2328.469400003087,
+        "total": 4217.6748999918345
       }
     },
     {
@@ -18155,6 +18263,7 @@
       "answer": "TGY'de sunulan derslerin kredi durumu, derslerin kredi değerleri olmamasıdır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -18316,10 +18425,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 39.896100002806634,
-        "reranking": 1323.530399997253,
-        "generation": 3184.167300001718,
-        "total": 4549.692800006596
+        "retrieval": 36.70799999963492,
+        "reranking": 1806.5566000004765,
+        "generation": 2745.427899993956,
+        "total": 4591.627599991625
       }
     },
     {
@@ -18331,6 +18440,7 @@
       "answer": "NA notu (devamsız) derslerin kredi eşdeğerliği ve notların intibakı ilgili enstitü yönetim kurulu tarafından yapılır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -18492,10 +18602,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 85.03930000006221,
-        "reranking": 1547.904099978041,
-        "generation": 3270.9746999898925,
-        "total": 4906.107999995584
+        "retrieval": 49.24449999816716,
+        "reranking": 2106.0061999887694,
+        "generation": 3321.9676000007894,
+        "total": 5480.431499978295
       }
     },
     {
@@ -18507,6 +18617,7 @@
       "answer": "Öğrenim dili, bir dersi özel öğrenci olarak alabilecek bir lisans programı için belirli koşullar gereklidir. Bu durumda, Türkçe dersi verilebilir olabilir. Ancak, belirli koşulların yerine getirilmesi gereklidir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -18668,10 +18779,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 36.415399983525276,
-        "reranking": 1161.8327999894973,
-        "generation": 4663.908799993806,
-        "total": 5864.267299999483
+        "retrieval": 43.39040000922978,
+        "reranking": 1579.0565999923274,
+        "generation": 4558.481900021434,
+        "total": 6183.346300007543
       }
     },
     {
@@ -18683,6 +18794,7 @@
       "answer": "Ön koşulu bulunan bir lisans dersini alabilmek için ön koşul dersinin başarılmış olması ya da dersi veren öğretim üyesinin onayı gerekir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -18844,10 +18956,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 42.850099998759106,
-        "reranking": 1473.1687000021338,
-        "generation": 3599.285200005397,
-        "total": 5118.010999984108
+        "retrieval": 45.00520002329722,
+        "reranking": 1602.3667999834288,
+        "generation": 3627.2103999799583,
+        "total": 5277.333299978636
       }
     },
     {
@@ -18859,6 +18971,7 @@
       "answer": "Not ortalamasına dâhil edilen dersler için en az geçer not 'D' ve not ortalamasına dahil edilmeyen dersler için 'S' notu olarak bilinen bilgileri içerir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -19020,10 +19133,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 44.041499990271404,
-        "reranking": 1669.9941999977455,
-        "generation": 4287.447400012752,
-        "total": 6003.95959999878
+        "retrieval": 47.24690000875853,
+        "reranking": 2194.3597000208683,
+        "generation": 4242.315899988171,
+        "total": 6486.975200008601
       }
     },
     {
@@ -19035,6 +19148,7 @@
       "answer": "En fazla bir çift anadal diploma programına kaydolabilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -19196,10 +19310,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 39.58209999836981,
-        "reranking": 1282.8682999825105,
-        "generation": 2185.9183999767993,
-        "total": 3510.3569000202697
+        "retrieval": 50.200600002426654,
+        "reranking": 1679.2429000197444,
+        "generation": 2201.4903999806847,
+        "total": 3933.8100000168197
       }
     },
     {
@@ -19211,6 +19325,7 @@
       "answer": "İzin başvurusu, en geç derslerin başlamasını takip eden dördüncü haftanın son iş gününe kadar yapar.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -19372,10 +19487,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 38.30990000278689,
-        "reranking": 1354.1659000038635,
-        "generation": 3263.3834999869578,
-        "total": 4658.617700013565
+        "retrieval": 46.094899997115135,
+        "reranking": 1850.988199992571,
+        "generation": 3279.8135000048205,
+        "total": 5179.854699992575
       }
     },
     {
@@ -19387,6 +19502,7 @@
       "answer": "Lisansüstü akademik yılda sonbahar ve ilkbahar dönemleri en az 14 haftadır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -19548,10 +19664,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 28.977700014365837,
-        "reranking": 1390.1520999788772,
-        "generation": 6953.324000001885,
-        "total": 8375.113899994176
+        "retrieval": 39.663200004724786,
+        "reranking": 1789.1612000239547,
+        "generation": 7263.985600002343,
+        "total": 9095.893799996702
       }
     },
     {
@@ -19563,6 +19679,7 @@
       "answer": "En az %15'ine öğrenim ücreti muafiyeti (%100) sağlanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -19724,10 +19841,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 43.16699999617413,
-        "reranking": 1375.5818999779876,
-        "generation": 2568.951499997638,
-        "total": 3990.2456999989226
+        "retrieval": 47.088899998925626,
+        "reranking": 1885.5758999998216,
+        "generation": 2683.3115000044927,
+        "total": 4619.7876000078395
       }
     },
     {
@@ -19738,7 +19855,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Yüksek lisans ve doktora programlarına kabul için gerekli olan diplomalar şunlardır:\\n\\n1. Lisans Diploması\\n2. Tezli Yüksek Lisans Diploması\\n3. Yüksek Lisans Diploması\\n4. Doktora Diploması\\n5. Lisansüstü Programları\\n6. Lis…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -19891,10 +20014,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 36.53069998836145,
-        "reranking": 1343.3969999896362,
-        "generation": 23458.391799998935,
-        "total": 24840.95349998097
+        "retrieval": 42.84179999376647,
+        "reranking": 2019.1965000121854,
+        "generation": 25152.85959999892,
+        "total": 27218.484200013336
       }
     },
     {
@@ -19906,6 +20029,7 @@
       "answer": "Sabancı Üniversitesi mezunları mezuniyetten sonra İngilizce yeterliliklerini takiben iki yıl süresince sağlamış kabul edilirler.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -20067,10 +20191,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 40.669099980732426,
-        "reranking": 1268.504200008465,
-        "generation": 3841.8706000084057,
-        "total": 5153.763000009349
+        "retrieval": 42.488800012506545,
+        "reranking": 1260.8123999962118,
+        "generation": 3309.022899979027,
+        "total": 4616.282099974342
       }
     },
     {
@@ -20082,6 +20206,7 @@
       "answer": "Tezli yüksek lisans programının normal süresi dört dönemdir, azami süresi ise on iki dönemdir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -20243,10 +20368,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 44.37829999369569,
-        "reranking": 1290.273899998283,
-        "generation": 2882.7597000054084,
-        "total": 4220.329799980391
+        "retrieval": 33.12420001020655,
+        "reranking": 1302.0787999848835,
+        "generation": 2867.0033999951556,
+        "total": 4205.289500008803
       }
     },
     {
@@ -20258,6 +20383,7 @@
       "answer": "Doktora yeterlik sınavına bir yılda en fazla iki kez girebilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisansustu-egitim-ogretim-yonetmeligi",
@@ -20419,10 +20545,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 37.289700005203485,
-        "reranking": 1477.292399998987,
-        "generation": 2693.342600017786,
-        "total": 4211.274300003424
+        "retrieval": 38.06550000444986,
+        "reranking": 1410.8648000110406,
+        "generation": 2570.8259999810252,
+        "total": 4022.363399999449
       }
     },
     {
@@ -20434,6 +20560,7 @@
       "answer": "Merkezin yönetim organları şunlardır:\n\na) Müdür.\n\nb) Yönetim Kurulu.\n\nc) Danışma Kurulu.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -20595,10 +20722,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 30.663699988508597,
-        "reranking": 772.6329000142869,
-        "generation": 2936.731599998893,
-        "total": 3741.5959000063594
+        "retrieval": 24.132799997460097,
+        "reranking": 824.8858000151813,
+        "generation": 2895.9403000189923,
+        "total": 3746.4964000100736
       }
     },
     {
@@ -20610,6 +20737,7 @@
       "answer": "Danışma Kurulu yılda en az bir defa müdürün çağırısıyla üye tam sayısının salt çoğunluğuyla toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "nanotani-fonksiyonel-yuzey-arayuzeyler-merkezi-yonetmeligi",
@@ -20771,10 +20899,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 31.663900008425117,
-        "reranking": 1192.7980000036769,
-        "generation": 3081.6887999826577,
-        "total": 4308.704399998533
+        "retrieval": 25.776299997232854,
+        "reranking": 1093.9521999971475,
+        "generation": 2992.6256999897305,
+        "total": 4118.129899987252
       }
     },
     {
@@ -20786,6 +20914,7 @@
       "answer": "Toplumsal cinsiyet ve kadın çalışmaları alanlarında faaliyet alanları, araştırmalar, eğitim faaliyetleri, koordinasyonlar ve ilgili kuruluşlar arasında işbirliği yapmak, toplumsal cinsiyet eşitliği duyarlılığının geliştirilmesi ve kadının sosyo-ekonomik statüsünü yükseltmek için çalışmak.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -20947,10 +21076,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 31.229600019287318,
-        "reranking": 1431.2195999955293,
-        "generation": 14548.219499993138,
-        "total": 16014.52940001036
+        "retrieval": 33.50359998876229,
+        "reranking": 1370.0848000007682,
+        "generation": 14211.67129999958,
+        "total": 15617.709199985256
       }
     },
     {
@@ -20962,6 +21091,7 @@
       "answer": "Müdür, toplumsal cinsiyet ve kadın çalışmaları konusunda eğitimi veya çalışmaları olan\nÜniversitenin tam zamanlı öğretim üyeleri arasından Rektörün önerisi üzerine Mütevelli Heyeti tarafından üç yıl için görevlendirilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "toplumsal-cinsiyet-kadin-calismalari-merkezi-yonetmeligi",
@@ -21123,10 +21253,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 33.38050001184456,
-        "reranking": 1262.6600000075996,
-        "generation": 4760.7838999829255,
-        "total": 6059.17139997473
+        "retrieval": 37.786499975482,
+        "reranking": 1188.8535000034608,
+        "generation": 4367.181700014044,
+        "total": 5596.328100014944
       }
     },
     {
@@ -21138,6 +21268,7 @@
       "answer": "Müdür, veri analitiği konusunda eğitimi veya çalışmaları olan Üniversitenin tam zamanlı öğretim üyeleri arasından Rektörün önerisi üzerine Mütevelli Heyeti tarafından üç yıl için görevlendirilir. Süresi biten Müdür yeniden görevlendirilebilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -21299,10 +21430,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 38.2656000147108,
-        "reranking": 1259.0831000125036,
-        "generation": 9389.781899983063,
-        "total": 10690.176000003703
+        "retrieval": 31.750199996167794,
+        "reranking": 1160.2655999886338,
+        "generation": 8431.668500008527,
+        "total": 9626.017400005367
       }
     },
     {
@@ -21314,6 +21445,7 @@
       "answer": "Danışma Kurulu, üniversite konuyla ilgili fakülte ve anabilim dalları, istekleri halinde ulusal ve uluslararası üniversiteler, enstitüler, araştırma merkezlerinde görevli öğretim elemanları ile veri analitiği alanında araştırma ve üretim yapan yerli-yabancı özel sektör kuruluşlarında çalışan ve/veya veri analitiği konusunda tecrübeli kişiler arasından Yönetim Kurulunun önerisiyle Mütevelli Heyeti tarafından görevlendirilen yedi kişiden oluşur.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -21475,10 +21607,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 36.171200015814975,
-        "reranking": 1070.9940000087954,
-        "generation": 19957.35899999272,
-        "total": 21067.280099989148
+        "retrieval": 35.21490001003258,
+        "reranking": 1136.3274000177626,
+        "generation": 14722.15800001868,
+        "total": 15896.137900010217
       }
     },
     {
@@ -21489,7 +21621,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Merkezin araştırma ve teknoloji geliştirme alanlarından üçü şunlardır:\\n\\na) ıleri kompozit malzemeler, polimer işleme süreçleri, nano ve makro üretim, eklemeli imalat ve üç boyutlu basım teknolojileri alanlarında ileri düzeyd…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -21642,10 +21780,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 98.22829999029636,
-        "reranking": 3047.5271999894176,
-        "generation": 21427.742300002137,
-        "total": 24577.98509998247
+        "retrieval": 38.35600000456907,
+        "reranking": 1286.7736000043806,
+        "generation": 17518.259699980263,
+        "total": 18849.148199980846
       }
     },
     {
@@ -21656,7 +21794,13 @@
       "answerable": true,
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
-      "abstention_reason": "generator_invalid_json",
+      "abstention_reason": "generator_invalid_json_syntax",
+      "generation_error": {
+        "category": "invalid_json_syntax",
+        "validation_summary": "JSON syntax error at line 2, column 13",
+        "debug_excerpt": "{ \"answer\": \"Tümleştirilmiş Üretim Teknolojileri Merkezi Yönetim Kurulu, Merkezin faaliyet alanlarında aktif çalışmaları bulunan Sabancı Üniversitesi tam zamanlı öğretim üyeleri, gerek duyulması halinde ulusal ve uluslararası üniversiteler…",
+        "attempts": 2
+      },
       "citations": [],
       "retrieved_chunks": [
         {
@@ -21809,10 +21953,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 81.2502000189852,
-        "reranking": 2550.5104000039864,
-        "generation": 20896.653100004187,
-        "total": 23532.93709998252
+        "retrieval": 46.98439998901449,
+        "reranking": 1224.8389999731444,
+        "generation": 17395.56909998646,
+        "total": 18670.489599986468
       }
     },
     {
@@ -21824,6 +21968,7 @@
       "answer": "Danışma Kurulu yılda en az dört defa toplanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "tumlesik-uretim-teknolojileri-merkezi-yonetmeligi",
@@ -21985,10 +22130,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 96.32130002137274,
-        "reranking": 3461.408200004371,
-        "generation": 2578.403999999864,
-        "total": 6155.047800013563
+        "retrieval": 40.22889997577295,
+        "reranking": 1250.7982999959495,
+        "generation": 2217.0317000127397,
+        "total": 3510.35209998372
       }
     },
     {
@@ -22000,6 +22145,7 @@
       "answer": "İhaleye katılamayacaklar",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -22161,10 +22307,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 132.63849998475052,
-        "reranking": 3144.2260000039823,
-        "generation": 2207.147699984489,
-        "total": 5501.6137000056915
+        "retrieval": 47.07620001863688,
+        "reranking": 1347.719400015194,
+        "generation": 2080.342200002633,
+        "total": 3478.0037000018638
       }
     },
     {
@@ -22176,6 +22322,7 @@
       "answer": "Açık ihale usulü, tüm isteklilerin teklif verebildiği usulidir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -22337,10 +22484,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 88.25749999959953,
-        "reranking": 3355.3426999715157,
-        "generation": 3193.36679999833,
-        "total": 6641.2460999854375
+        "retrieval": 31.10160000505857,
+        "reranking": 1444.9260999972466,
+        "generation": 2763.5000000009313,
+        "total": 4252.951100002974
       }
     },
     {
@@ -22352,6 +22499,7 @@
       "answer": "Geçici teminat teklif bedelinin %3'ünden az, %6'sından fazla olmamak üzere istekli ile sözleşmeyi imzalamaması durumunda bu teklif sahibinin de geçici teminatı gelir kaydedilerek ihale iptal edilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -22513,10 +22661,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 112.90749997715466,
-        "reranking": 3037.2696999984328,
-        "generation": 11379.100699996343,
-        "total": 14532.551199983573
+        "retrieval": 39.529999980004504,
+        "reranking": 1334.2135999992024,
+        "generation": 10252.545900002588,
+        "total": 11628.61340001109
       }
     },
     {
@@ -22528,6 +22676,7 @@
       "answer": "İhale, değerlendirme sonucunda ekonomik açıdan en avantajlı teklifi veren isteklinin üzerinde bırakılır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -22689,10 +22838,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 99.02349999174476,
-        "reranking": 3270.4018999938853,
-        "generation": 4128.98189999396,
-        "total": 7502.676000003703
+        "retrieval": 36.580099986167625,
+        "reranking": 1392.3276999848895,
+        "generation": 3146.852999983821,
+        "total": 4578.464299993357
       }
     },
     {
@@ -22704,6 +22853,7 @@
       "answer": "İtiraz edilebilir aday veya istekliler, ihale sürecindeki işlem ya da eylemlerin hukuka aykırılığı iddiasıyla ihalenin sona erdiği tarihten beş iş günü içinde Üniversiteye itiraz edebilirler.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ihale-yonetmeligi",
@@ -22865,10 +23015,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 140.17450000392273,
-        "reranking": 3274.2539000173565,
-        "generation": 5356.882099993527,
-        "total": 8774.567600019509
+        "retrieval": 45.12479997356422,
+        "reranking": 1515.8573999942746,
+        "generation": 4558.833200018853,
+        "total": 6121.898500015959
       }
     },
     {
@@ -22880,6 +23030,7 @@
       "answer": "Sabancı Üniversitesi kütüphanesi 1 Eylül 2026 tarihinde saat 15:00 kapanır.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "sabanci-ana-yonetmeligi",
@@ -23041,10 +23192,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 120.1156000024639,
-        "reranking": 2525.7906000188086,
-        "generation": 8298.344200011343,
-        "total": 10962.274999998044
+        "retrieval": 42.99340001307428,
+        "reranking": 1018.3604000194464,
+        "generation": 4736.592500004917,
+        "total": 5799.564200016903
       }
     },
     {
@@ -23056,6 +23207,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -23208,10 +23360,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 193.6621000058949,
-        "reranking": 3257.5474999903236,
+        "retrieval": 40.34529998898506,
+        "reranking": 1034.6159000182524,
         "generation": 0.0,
-        "total": 3453.2546999980696
+        "total": 1076.0876999993343
       }
     },
     {
@@ -23223,6 +23375,7 @@
       "answer": "Öğrenci, sonbahar ve ilkbahar dönemleri için derslerin başlamasını takip eden dördüncü haftanın son iş gününe kadar Üniversiteden ayrılma başvurusu yapan öğrencinin, ödemekle yükümlü olduğu ücretin, %25'ini ödemesi gerekir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -23384,10 +23537,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 74.78049999917857,
-        "reranking": 2883.3803000161424,
-        "generation": 22343.6297000153,
-        "total": 25305.963599996176
+        "retrieval": 27.664099994581193,
+        "reranking": 1241.4630000130273,
+        "generation": 18426.601599989226,
+        "total": 19698.179200000595
       }
     },
     {
@@ -23399,6 +23552,7 @@
       "answer": "Danışma Kurulu ve Yönetim Kurulu",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "veri-analitigi-merkezi-yonetmeligi",
@@ -23560,10 +23714,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 164.68999997596256,
-        "reranking": 3410.0232000055257,
-        "generation": 2829.928099992685,
-        "total": 6411.842300003627
+        "retrieval": 42.844300012802705,
+        "reranking": 1227.8408999845851,
+        "generation": 2269.393599999603,
+        "total": 3543.028599990066
       }
     },
     {
@@ -23575,6 +23729,7 @@
       "answer": "2026-2027 Erasmus güz dönemi için izin başvurularının son tarihi 2026-2027 akademik yılı öncesinde üniversiteye kayıt olmuş öğrencilerin derslerin başlamasını takip eden 4 üncü haftanın son iş gününe kadar izin başvurusu yapması durumunda kabul edilir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "temel-gelistirme-yili-egitim-ogretim-yonetmeligi",
@@ -23736,10 +23891,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 60.11419999413192,
-        "reranking": 1656.6238999948837,
-        "generation": 6869.047399988631,
-        "total": 8589.139299991075
+        "retrieval": 55.50270000821911,
+        "reranking": 1487.0545000012498,
+        "generation": 6354.668900021352,
+        "total": 7900.796099973377
       }
     },
     {
@@ -23751,6 +23906,7 @@
       "answer": "2026-2027 güz dönemi final sınavları 2026-2027 akademik yılı güz ve bahar dönemleri için yapılan izin başvurularında belirtilen tarihe kadar olmak üzere, belirtilen ders kayıtlarından üç gün öncesine kadar belirlediği I notu dönüşüm tarihlerini, karar ile Öğrenci Kaynakları Birimine iletir.",
       "abstained": false,
       "abstention_reason": null,
+      "generation_error": null,
       "citations": [
         {
           "document_id": "lisans-egitim-ogretim-yonetmeligi",
@@ -23912,10 +24068,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 42.94240000308491,
-        "reranking": 1423.0900999973528,
-        "generation": 15787.398700020276,
-        "total": 17256.81170000462
+        "retrieval": 29.796999995596707,
+        "reranking": 1461.7274000192992,
+        "generation": 15054.384499992011,
+        "total": 16548.939100001007
       }
     },
     {
@@ -23927,6 +24083,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -24079,10 +24236,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 59.30239998269826,
-        "reranking": 3299.6488000208046,
+        "retrieval": 45.38739999406971,
+        "reranking": 1648.7030000134837,
         "generation": 0.0,
-        "total": 3361.3269999914337
+        "total": 1697.134299989557
       }
     },
     {
@@ -24094,6 +24251,7 @@
       "answer": "Yeterli kanıt bulunamadı.",
       "abstained": true,
       "abstention_reason": "query_coverage_below_threshold",
+      "generation_error": null,
       "citations": [],
       "retrieved_chunks": [
         {
@@ -24246,10 +24404,10 @@
         "minimum_rrf_score": 0.02
       },
       "latency_ms": {
-        "retrieval": 51.5542000066489,
-        "reranking": 2013.7425000139046,
+        "retrieval": 33.40859999298118,
+        "reranking": 1106.26569998567,
         "generation": 0.0,
-        "total": 2067.2688000195194
+        "total": 1141.7270000092685
       }
     }
   ]

@@ -731,10 +731,8 @@ class LlamaCppServerGenerator:
             "top_k": self.settings.top_k,
             "seed": self.settings.seed,
             "stream": False,
-            "response_format": {
-                "type": "json_schema",
-                "schema": GENERATOR_JSON_SCHEMA,
-            },
+            "response_format": {"type": "json_object"},
+            "json_schema": GENERATOR_JSON_SCHEMA,
         }
 
     def close(self) -> None:

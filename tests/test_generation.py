@@ -282,7 +282,7 @@ def test_runtime_error_is_fail_closed_and_safely_summarized() -> None:
     assert "secret" not in json.dumps(result)
 
 
-def test_b10621_request_uses_documented_direct_schema_shape(tmp_path: Path) -> None:
+def test_b10621_request_uses_documented_top_level_schema_shape(tmp_path: Path) -> None:
     config = load_config("config/default.toml")
     adapter = LlamaCppServerGenerator(
         tmp_path / "model.gguf",
@@ -292,11 +292,9 @@ def test_b10621_request_uses_documented_direct_schema_shape(tmp_path: Path) -> N
 
     body = adapter._request_body("system", "user")
 
-    assert body["response_format"] == {
-        "type": "json_schema",
-        "schema": GENERATOR_JSON_SCHEMA,
-    }
-    assert "json_schema" not in body["response_format"]
+    assert body["response_format"] == {"type": "json_object"}
+    assert body["json_schema"] == GENERATOR_JSON_SCHEMA
+    assert "schema" not in body["response_format"]
 
 
 def test_adapter_verifies_model_and_runtime_archive_hashes(tmp_path: Path) -> None:

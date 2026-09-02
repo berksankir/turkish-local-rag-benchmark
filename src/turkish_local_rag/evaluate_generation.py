@@ -106,8 +106,8 @@ def run_evaluation(config_path: str | Path, *, overwrite: bool = False) -> dict[
             "generator_output_schema_version": "1.1",
             "llama_cpp_response_format": {
                 "runtime_release": config.generation.runtime_version,
-                "type": "json_schema",
-                "schema_location": "response_format.schema",
+                "type": "json_object",
+                "schema_location": "top-level json_schema",
                 "documentation": (
                     "https://github.com/ggml-org/llama.cpp/blob/"
                     "b10621/tools/server/README.md"
