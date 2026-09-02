@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -88,3 +90,50 @@ def test_aggregate_separates_answerable_and_abstention_metrics() -> None:
     assert summary["all"]["hybrid_rrf"]["answerable_coverage"] == 1.0
     assert summary["test"]["hybrid_reranked"]["correct_abstention_rate"] == 1.0
     assert summary["dev"]["hybrid_rrf"]["false_abstention_rate"] == 0.0
+
+
+def test_committed_generation_benchmark_is_self_describing_silver() -> None:
+    report = json.loads(
+        Path("evaluation/results/silver/generation_benchmark.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert report["dataset"]["kind"] == "silver"
+    assert report["dataset"]["human_reviewed"] is False
+    assert report["protocol"]["test_used_for_model_or_threshold_selection"] is False
+    assert report["protocol"]["llm_as_a_judge"] is False
+    assert report["runtime"]["generator_start_count"] == 1
+    assert report["models"]["generator"]["model_size_bytes"] == 1_117_320_736
+    assert len(report["models"]["generator"]["runtime_sha256"]) == 64
+    assert len(report["queries"]) == 100
+    assert _aggregate(report["queries"]) == report["summary"]
+
+
+def test_committed_generation_citations_are_retrieved_and_abstentions_are_empty() -> None:
+    report = json.loads(
+        Path("evaluation/results/silver/generation_benchmark.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    for row in report["queries"]:
+        retrieved = {hit["chunk_id"] for hit in row["retrieved_chunks"]}
+        if row["abstained"]:
+            assert row["citations"] == []
+            assert row["answer"] == "Yeterli kanıt bulunamadı."
+        else:
+            assert row["citations"]
+            assert all(citation["chunk_id"] in retrieved for citation in row["citations"])
+
+
+def test_generation_markdown_reports_separated_latency_and_limitations() -> None:
+    report = Path("evaluation/results/silver/generation_benchmark.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "`human_reviewed=false`" in report
+    assert "Test split model, pipeline veya threshold seçimi için kullanılmamıştır" in report
+    for stage in ("retrieval", "reranking", "generation", "total"):
+        assert f"| hybrid_rrf | {stage} |" in report
+        assert f"| hybrid_reranked | {stage} |" in report

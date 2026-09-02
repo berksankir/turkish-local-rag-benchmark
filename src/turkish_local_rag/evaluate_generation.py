@@ -332,12 +332,29 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
     runtime = payload["runtime"]
     lines.extend([
         "",
+        "## Latency (all split, milliseconds)",
+        "",
+        "| Pipeline | Stage | Mean | p50 | p95 |",
+        "|---|---|---:|---:|---:|",
+    ])
+    for pipeline in PIPELINES:
+        for stage in ("retrieval", "reranking", "generation", "total"):
+            latency = payload["summary"]["all"][pipeline]["latency_ms"][stage]
+            lines.append(
+                f"| {pipeline} | {stage} | {latency['mean']:.1f} | "
+                f"{latency['p50']:.1f} | {latency['p95']:.1f} |"
+            )
+    lines.extend([
+        "",
         f"Generator initialization: {runtime['initialization_seconds']:.3f} s; benchmark: "
         f"{runtime['benchmark_seconds']:.3f} s; generator start count: {runtime['generator_start_count']}.",
         f"Approximate peak process-tree RAM: {runtime['approximate_peak_process_tree_rss_bytes']} bytes.",
         "",
         "Latency alanları retrieval, reranking, generation ve total olarak ayrı ölçülmüştür. "
         "Citation ve cevap metrikleri deterministic karşılaştırmalardır; semantik judge kullanılmaz.",
+        "Pipeline'lar ardışık çalıştırıldığı, response uzunlukları değiştiği ve cache ısındığı için "
+        "generation latency farkı doğrudan reranker hız etkisi olarak yorumlanamaz. Her pipeline'da "
+        "beş model çıktısı `generator_invalid_json` nedeniyle fail-closed abstention olmuştur.",
         "",
     ])
     return "\n".join(lines)

@@ -20,9 +20,10 @@ insan onayı değildir. Daha düşük inceleme yükü için 20 kayıtlık determ
 provisional teknik sonuç olarak arşivlenmiştir ve nihai gold benchmark değildir.
 
 Pipeline; sayfa sınırını aşmayan chunk'lar, güvenilir metadata, dense/BM25
-retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Deterministic evidence
-gate, citation uygulama katmanı ve generation; insan review ve nihai retrieval
-benchmark tamamlanana kadar başlatılmaz.
+retrieval, RRF fusion ve isteğe bağlı reranking kullanır. Faz 8'de deterministic
+evidence gate, trusted citation katmanı ve CPU-only Qwen2.5 generation eklenmiş;
+gerçek AI-assisted silver koşusu tamamlanmıştır. Bu sonuç gold veya tamamen
+human-reviewed değildir.
 
 ## Config ve testler
 
@@ -257,10 +258,66 @@ desteği ve sabit dosya SHA-256 değeri nedeniyle seçilmiştir. Model kartını
 dil listesi Türkçe'yi açıkça saymadığından Türkçe kalitesi gerçek yerel test
 öncesinde doğrulanmış kabul edilmez.
 
-Model ve runtime henüz indirilmemiştir. 1 GB üzerindeki indirme için kullanıcı
-onayı beklenmektedir. Karşılaştırma, sabit revision, dosya hash'i, RAM/hız tahmini
-ve kaynaklar `docs/phase8_model_selection.md` içinde kayıtlıdır. Model ağırlıkları
-`models/`, yerel runtime dosyaları `runtime/` altında tutulacak ve Git'e eklenmeyecektir.
+Kullanıcı onayından sonra yalnız seçilen `qwen2.5-1.5b-instruct-q4_k_m.gguf`
+dosyası indirilmiş; 1.117.320.736 bayt boyut ve sabit SHA-256 doğrulanmıştır.
+`llama.cpp` b10621 Windows CPU runtime arşivi 18.068.018 bayttır ve sabit SHA-256
+ile doğrulanır. Karşılaştırma, revision, hash, lisans ve resmî kaynaklar
+`docs/phase8_model_selection.md` içinde kayıtlıdır. Model ağırlıkları `models/`,
+runtime dosyaları `runtime/` altında ignore edilir ve Git'e eklenmez.
+
+## Grounded generation, evidence gate ve citation
+
+Sorgu arayüzü varsayılan hızlı `hybrid_rrf` ve opsiyonel `hybrid_reranked`
+pipeline'larını destekler:
+
+```powershell
+.\.venv\Scripts\python.exe -m turkish_local_rag.query --question "Üniversitenin en yüksek karar organı hangisidir?" --pipeline hybrid_rrf
+.\.venv\Scripts\python.exe -m turkish_local_rag.query --question "Üniversitenin en yüksek karar organı hangisidir?" --pipeline hybrid_reranked
+```
+
+Generator yalnız retrieved context'i görür; kısa Türkçe cevap, sabit seed ve
+deterministic sampling kullanır. Çıktı parse edilip katı JSON şemasına göre
+doğrulanır. Citation'ı LLM yazmaz: uygulama seçilen dahili context kimliğini trusted
+chunk metadata'sındaki belge, başlık, fiziksel sayfa, URL'ler ve `chunk_id` ile
+eşler. Uydurulmuş veya metadata'sı eksik citation reddedilir. Aynı `llama-server`
+instance'ı sorgular arasında yeniden kullanılır.
+
+Evidence gate, dev split üzerinde seçilen `query_coverage >= 0,40` ve
+`top_rrf_score >= 0,020` eşiklerini kullanır. Kanıt zayıfsa model çağrılmaz ve aynı
+versioned JSON şemasında `Yeterli kanıt bulunamadı.` yanıtı döner. Successful ve
+abstain çıktılar; retrieval, reranking, generation ve total latency ile embedding,
+reranker ve generator metadata'sını taşır. Threshold seçimi için test split
+kullanılmamıştır.
+
+Gerçek smoke sorgusunda her iki pipeline da “Mütevelli Heyet” cevabını trusted
+`sabanci-ana-yonetmeligi:p2:c5` citation'ıyla üretmiştir. Unanswerable smoke sorgusu
+gate'te model çağrılmadan durmuş, citation üretmemiştir. Gerçek 50 kayıt × iki
+pipeline koşusunda generator yalnız bir kez başlatılmıştır.
+
+2026-09-02 AI-assisted silver generation sonuçları:
+
+| Pipeline | R@1/R@3/R@5 | MRR | Citation | Coverage | Correct abstain | False abstain | Token F1 | Key facts |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| hybrid_rrf | 0,725 / 0,925 / 0,950 | 0,833 | 0,676 | 0,925 | 0,700 | 0,075 | 0,420 | 0,390 |
+| hybrid_reranked | 0,775 / 0,950 / 1,000 | 0,868 | 0,686 | 0,875 | 0,500 | 0,125 | 0,406 | 0,397 |
+
+| Pipeline | Stage | Ortalama ms | p50 ms | p95 ms |
+|---|---|---:|---:|---:|
+| hybrid_rrf | retrieval / reranking / generation / total | 114,7 / 0,0 / 15.245,7 / 15.368,3 | 121,9 / 0,0 / 15.154,4 / 15.281,3 | 173,5 / 0,0 / 28.507,5 / 28.558,6 |
+| hybrid_reranked | retrieval / reranking / generation / total | 65,0 / 1.809,8 / 6.864,8 / 8.959,1 | 43,2 / 1.389,3 / 4.129,0 / 6.155,0 | 164,7 / 3.355,3 / 21.427,7 / 24.578,0 |
+
+Benchmark 1.216,431 saniye sürmüş; model initialization 9,913 saniye olmuştur.
+Peak Python RSS 753.774.592, peak llama-server RSS 1.915.269.120 ve yaklaşık peak
+process-tree toplamı 2.669.043.712 bayttır (yaklaşık 2,49 GiB). Pipeline'ların
+ardışık çalıştırılması, response uzunluğu ve cache ısınması generation sürelerini
+etkilediğinden reranked hattın daha düşük generation ortalaması doğrudan reranker
+hız kazanımı olarak yorumlanmamalıdır.
+
+RRF genel correct-abstention oranı 0,700; reranked oranı 0,500'dür. Her pipeline'da
+beş çıktı `generator_invalid_json` nedeniyle güvenli abstention'a düşmüştür.
+Bu sınırlamalar sonuçlarda korunur; test split'e bakılarak eşik veya pipeline
+değiştirilmemiştir. Ayrıntılı, networksüz tekrar puanlanabilir JSON/CSV/Markdown
+raporları `evaluation/results/silver/generation_benchmark.*` altındadır.
 
 ## Evaluation adayları
 

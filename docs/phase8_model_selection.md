@@ -2,8 +2,9 @@
 
 Araştırma tarihi: 2026-09-02
 
-Hedef ortam: Windows, Intel i5-12450H, 8 GB RAM, yalnız CPU. Bu belge yalnız
-model seçimini kaydeder; hiçbir model ağırlığı veya runtime indirilmemiştir.
+Hedef ortam: Windows, Intel i5-12450H, 8 GB RAM, yalnız CPU. Seçimden sonra
+kullanıcı onayıyla yalnız seçilen model ve sabit CPU runtime indirilip doğrulanmış,
+smoke sorguları ve gerçek AI-assisted silver benchmark çalıştırılmıştır.
 
 ## Karşılaştırma
 
@@ -13,13 +14,14 @@ model seçimini kaydeder; hiçbir model ağırlığı veya runtime indirilmemiş
 | Qwen3-1.7B | 1,7B / resmî repository'de yalnız Q8_0 | 1,83 GB | Apache-2.0; model üreticisinin resmî GGUF repository'si | Resmî kart 100'den fazla dil/diyalekt ve multilingual instruction following bildiriyor; Türkçe adı ayrıca verilmemiş. JSON biçimi prompt örneği var, fakat bu görevdeki schema başarısı ölçülmedi. | `/no_think` ile kapatılabiliyor | Yaklaşık 2,2–2,8 GiB; yaklaşık 6–15 token/sn |
 | Gemma 3 1B IT | 1B / Q4_K_M topluluk yerine llama.cpp ekibinin GGUF dönüşümü | 806 MB | Gemma kullanım koşulları; ggml-org dönüşümü, temel model Google DeepMind | Google kartı eğitim verisinde 140'tan fazla dil ve question answering uygunluğu bildiriyor; Türkçe ve bu şemadaki JSON başarısı ayrıca kanıtlanmış değil. | Ayrı bir thinking anahtarı belgelenmiyor | Yaklaşık 1,2–1,7 GiB; yaklaşık 18–35 token/sn |
 
-RAM ve token/sn değerleri bu i5-12450H üzerinde henüz ölçülmemiş mühendislik
-tahminleridir; benchmark sonucu değildir. LLM RAM tahmini model ağırlığı, 2048–3072
+Tablodaki RAM ve token/sn değerleri seçim anındaki mühendislik tahminleridir;
+benchmark sonucu değildir. LLM RAM tahmini model ağırlığı, 2048–3072
 token KV cache ve runtime overhead'ini içerir. Qwen2.5 için mevcut retrieval,
 embedding, opsiyonel reranker, Qdrant ve Python çalışma kümesi de hesaba katıldığında
 toplam uygulama working set'inin yaklaşık 3,0–4,5 GiB aralığında kalması beklenir.
-Gerçek peak process RAM ve token/sn ancak onaylı model çalıştırıldıktan sonra
-raporlanacaktır.
+Gerçek benchmark'ta peak Python RSS 753.774.592, peak llama-server RSS
+1.915.269.120 ve yaklaşık peak process-tree toplamı 2.669.043.712 bayt
+(yaklaşık 2,49 GiB) ölçülmüştür.
 
 ## Seçim
 
@@ -32,8 +34,10 @@ Seçilen tek model **Qwen/Qwen2.5-1.5B-Instruct-GGUF Q4_K_M**'dir.
 - Boyut: `1.117.320.736` bayt
 - SHA-256: `6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e`
 - Lisans: Apache-2.0
-- Planlanan runtime: sabit sürümlü, CPU-only `llama.cpp` `llama-server`; local
-  HTTP üzerinden tek ve tekrar kullanılan model instance'ı
+- Runtime: `llama.cpp` b10621 (`0.3.0-dev`, commit `c1d0e7a00`) Windows CPU x64;
+  arşiv 18.068.018 bayt, SHA-256
+  `0e8b65e650e369f70f8307d890508886f171ef4fb00facccddd4a1b7ffdaca51`
+- Local HTTP üzerinden tek ve tekrar kullanılan `llama-server` instance'ı
 
 Qwen3 yalnız daha yeni olduğu için seçilmedi: resmî repository Q4_K_M dosyasını
 silmiş ve yalnız 1,83 GB Q8_0 bırakmıştır; daha büyük ağırlık ve KV cache, 8 GB RAM'de
@@ -44,10 +48,12 @@ Qwen2.5 kadar açık belgelenmemiştir. Qwen2.5'in model üreticisi tarafından 
 Q4_K_M dosyası; boyut, lisans, JSON instruction iddiası ve yeniden üretilebilir dosya
 hash'i bakımından daha dengeli seçimdir.
 
-Seçim Türkçe cevap kalitesini peşinen kanıtlamaz. Onaydan sonraki smoke testlerde
-context'e bağlı kısa Türkçe cevap, şema uyumu, halüsinasyon/citation reddi, CPU hızı
-ve gerçek RAM birlikte ölçülecek; başarısız olursa test split'e bakmadan yalnız silver
-`dev` kanıtlarıyla karar yeniden değerlendirilecektir.
+Seçim Türkçe yeterliliğini genel olarak kanıtlamaz. Gerçek smoke testinde iki
+pipeline da context'e bağlı doğru kısa Türkçe cevap ve trusted citation üretmiş;
+unanswerable smoke sorgusu model çağrılmadan abstain etmiştir. Silver benchmark'ta
+generator yalnız bir kez başlatılmış, ancak her pipeline'da beş şema/parse hatası
+`generator_invalid_json` olarak fail-closed abstention'a dönüşmüştür. Bu nedenle
+structured output davranışı kullanılabilir fakat kusursuz değildir.
 
 ## Runtime ve structured output
 
@@ -71,10 +77,14 @@ için kapatılacak düşünme modu yoktur.
 - [Gemma 3 resmî Google model kartı ve kullanım koşulları](https://huggingface.co/google/gemma-3-1b-it-qat-q4_0-gguf)
 - [ggml-org Gemma 3 Q4_K_M dosyası](https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/blob/main/gemma-3-1b-it-Q4_K_M.gguf)
 - [llama.cpp resmî repository ve server](https://github.com/ggml-org/llama.cpp)
+- [llama.cpp v0.3.0 ve sabit b10621 runtime](https://github.com/ggml-org/llama.cpp/releases/tag/b10621)
+- [b10621 Windows asset build provenance/attestation](https://github.com/ggml-org/llama.cpp/attestations/42818481)
 - [llama.cpp JSON Schema/GBNF dokümantasyonu](https://github.com/ggml-org/llama.cpp/blob/master/grammars/README.md)
 - [llama.cpp Windows kurulum dokümantasyonu](https://github.com/ggml-org/llama.cpp/blob/master/docs/install.md)
 
 ## Phase gate
 
-Seçilen GGUF 1 GB'tan büyüktür. Açık kullanıcı onayı alınmadan model veya runtime
-indirmesi, gerçek generation smoke testi ya da generation benchmark'ı yapılmayacaktır.
+1 GB üzerindeki GGUF için açık kullanıcı onayı alınmış; seçilen tek model ve runtime
+indirilerek hash'leri doğrulanmıştır. Model/runtime Git-ignore kapsamında kalır.
+Generation sonuçları AI-assisted silver'dır, `human_reviewed=false` bilgisini taşır
+ve gold ya da tamamen human-reviewed benchmark olarak yorumlanamaz.

@@ -472,14 +472,18 @@ class LlamaCppServerGenerator:
             "model_id": self.settings.model_id,
             "revision": self.settings.model_revision,
             "sha256": self.settings.model_sha256,
+            "model_file": self.model_path.name,
+            "model_size_bytes": self.settings.model_size_bytes,
             "quantization": "Q4_K_M",
             "runtime": f"llama.cpp-{self.settings.runtime_version}",
+            "runtime_sha256": self.settings.runtime_sha256,
             "context_window_tokens": self.settings.context_window_tokens,
             "max_output_tokens": self.settings.max_output_tokens,
             "seed": self.settings.seed,
             "temperature": self.settings.temperature,
             "top_p": self.settings.top_p,
             "top_k": self.settings.top_k,
+            "cpu_threads": self.settings.cpu_threads,
         }
 
     @property
