@@ -27,7 +27,7 @@ CURRENT_PROTECTED_CONTENT_SHA256 = {
     "retrieval_benchmark": "0d4fa7e84ded8f169f3274163356efe8d3a94b6d7807567b554264793bcf9eaa",
     "reranker_profile": "5792fc52ce39dff267945fe2428cc0b6c68926e8f0f0a0f66d26a221fb334488",
     "evidence_gate_tuning": "b49d59ec7fb6e1d9e0fafe995ee751a6f4ec070b9ef1c59c5e4fa0df0ebb3491",
-    "generation_benchmark": "6738fadc023b68d69cb466602b5749a295150cafb096b27b0bb81117dbbaa100",
+    "generation_benchmark": "cae090e344c36a0ad558839f2b24c15f7319f7d28e0dd2e1b0ac19af3e99adb5",
 }
 
 
@@ -281,10 +281,13 @@ def test_remaining_thirty_records_have_no_fabricated_item_review() -> None:
 
 
 def test_readme_matches_machine_readable_release_provenance() -> None:
-    readme = Path("README.md").read_text(encoding="utf-8")
-    normalized = " ".join(readme.split())
+    english = Path("README.md").read_text(encoding="utf-8")
+    turkish = Path("README.tr.md").read_text(encoding="utf-8")
+    normalized_english = " ".join(english.split())
+    normalized_turkish = " ".join(turkish.split())
 
-    assert SILVER_DESCRIPTION_EN in normalized
-    assert SILVER_DESCRIPTION_TR in normalized
-    assert "`dataset_release_approved=true`" in readme
-    assert "`all_records_human_reviewed=false`" in readme
+    assert SILVER_DESCRIPTION_EN in normalized_english
+    assert SILVER_DESCRIPTION_TR in normalized_turkish
+    for readme in (english, turkish):
+        assert "dataset_release_approved=true" in readme
+        assert "all_records_human_reviewed=false" in readme
