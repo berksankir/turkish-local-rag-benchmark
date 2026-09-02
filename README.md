@@ -241,12 +241,10 @@ edilmez. Silver hiçbir yerde human-reviewed veya gold olarak sunulmamalıdır.
 İnceleme yükünü azaltan `evaluation/silver_audit.csv`, 10 unanswerable kaydın
 tamamını ve dokuz belgenin her birini temsil edecek şekilde seçilmiş 10 answerable
 kaydı içerir. Ek answerable kota, en çok adayı bulunan belgeye deterministik olarak
-verilir; seçim retrieval sonuçlarından türetilmez. On answerable kayıt kullanıcı
-tarafından `berksankir` reviewer kimliğiyle `approved` olarak işaretlenmiştir;
-10 unanswerable kayıt henüz `pending` durumundadır. Yirmi kaydın tamamı sorunsuz
-`approved` olduğunda silver set “human-audited sample” olarak tanımlanabilir;
-yine de “human-reviewed gold” olmaz. Audit bir sorun bulursa silver provisional
-kalır ve ilgili aday ayrıca düzeltilmelidir.
+verilir; seçim retrieval sonuçlarından türetilmez. Yirmi kaydın tamamı kullanıcı
+tarafından kontrol edilmiş ve `berksankir` reviewer kimliğiyle `approved` olarak
+işaretlenmiştir; silver set bu sınırlı anlamda “human-audited sample”dır, ancak
+“human-reviewed gold” değildir.
 
 Tam gold incelemesi için `evaluation/review.csv` içindeki 50 kayıt korunur ve
 başlangıçta `pending` kalır. Her iki CSV'de de yalnızca `review_status`,
@@ -286,7 +284,7 @@ girmez; gold benchmark yalnızca `approved` kayıtları kullanır. Dataset seçi
 açıkça yapılır ve sonuçlar birbirinden ayrı klasörlere yazılır:
 
 ```powershell
-# Provisional synthetic silver benchmark; henüz çalıştırılmadı
+# Provisional synthetic silver benchmark
 .\.venv\Scripts\python.exe -m turkish_local_rag.evaluate --config config\default.toml --dataset silver
 
 # Nihai human-reviewed gold benchmark; review tamamlanana kadar bloke
@@ -297,6 +295,25 @@ Silver çıktıları `evaluation/results/silver/`, gold çıktıları
 `evaluation/results/gold/` altında üretilir. Silver JSON/CSV/Markdown çıktıları
 dataset türünü ve audit durumlarını taşır; otomatik doğrulama insan onayı gibi
 sunulmaz.
+
+2026-09-02 canonical silver koşusu 50 soru ve dört pipeline üzerinde tamamlanmıştır.
+JSON raporu `kind=\"silver\"`, `human_reviewed=false`, 20 provenance sahibi audit
+kararı (`berksankir`, 20 `approved`) ve 436 chunk bilgisini taşır. Benchmark süresi
+232,319 saniye, yaklaşık peak process working set 1.284.526.080 bayttır. Pipeline
+seçimi yalnız sekiz answerable kayıt içeren `dev` split sonuçlarıyla yapılmıştır:
+
+| Pipeline | dev R@1 | dev R@3 | dev R@5 | dev MRR | dev Page@1 | Avg ms |
+|---|---:|---:|---:|---:|---:|---:|
+| dense | 0,5000 | 0,8750 | 0,8750 | 0,6875 | 0,5000 | 90,173 |
+| bm25 | 0,6250 | 1,0000 | 1,0000 | 0,8125 | 0,6250 | 3,198 |
+| hybrid_rrf | 0,7500 | 0,8750 | 0,8750 | 0,8304 | 0,7500 | 91,099 |
+| hybrid_reranked | 0,6250 | 0,8750 | 1,0000 | 0,7750 | 0,6250 | 4408,911 |
+
+Bu dev karşılaştırmasına göre Faz 8 için provisional retrieval pipeline'ı
+`hybrid_rrf` seçilmiştir. `test` split yalnız dokunulmamış holdout sonucu olarak
+raporlanır; threshold, pipeline seçimi veya başka bir ayar için kullanılmamıştır.
+Bu koşu human-reviewed gold benchmark değildir.
+
 AI adaylarıyla yapılan eski teknik koşunun metrikleri korunmuş, metodolojik
 etiketleri düzeltilmiş çıktıları
 `evaluation/provisional/2026-09-01-ai-candidates/` altındadır. Bunlar pipeline'ın

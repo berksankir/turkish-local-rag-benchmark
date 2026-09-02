@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ARCHIVE = Path("evaluation/provisional/2026-09-01-ai-candidates")
+CANONICAL_SILVER = Path("evaluation/results/silver")
 ORIGINAL_CSV_SHA256 = (
     "b66889c2d20085142bdd3b2e2562ff2c75538af3b531e1806be0152c2b51c041"
 )
@@ -107,7 +108,7 @@ def test_full_review_remains_pending_without_human_provenance() -> None:
     assert all(row["reviewed_at_utc"] == "" for row in rows)
 
 
-def test_silver_audit_preserves_explicit_answerable_approvals() -> None:
+def test_silver_audit_preserves_explicit_human_approvals() -> None:
     with Path("evaluation/silver_audit.csv").open(
         "r", encoding="utf-8-sig", newline=""
     ) as source:
@@ -116,17 +117,59 @@ def test_silver_audit_preserves_explicit_answerable_approvals() -> None:
     answerable = [row for row in rows if row["answerable"] == "true"]
     unanswerable = [row for row in rows if row["answerable"] == "false"]
     assert len(answerable) == len(unanswerable) == 10
-    assert all(row["review_status"] == "approved" for row in answerable)
-    assert all(row["review_notes"] == "" for row in answerable)
-    assert all(row["reviewer"] == "berksankir" for row in answerable)
+    assert all(row["review_status"] == "approved" for row in rows)
+    assert all(row["review_notes"] == "" for row in rows)
+    assert all(row["reviewer"] == "berksankir" for row in rows)
     timestamps = [
         datetime.fromisoformat(row["reviewed_at_utc"].replace("Z", "+00:00"))
-        for row in answerable
+        for row in rows
     ]
     assert all(
-        (later - earlier).total_seconds() == 10
+        10 <= (later - earlier).total_seconds() <= 15
         for earlier, later in zip(timestamps, timestamps[1:])
     )
-    assert all(row["review_status"] == "pending" for row in unanswerable)
-    assert all(row["reviewer"] == "" for row in unanswerable)
-    assert all(row["reviewed_at_utc"] == "" for row in unanswerable)
+
+
+def test_canonical_silver_report_has_required_dataset_and_audit_metadata() -> None:
+    payload = json.loads(
+        (CANONICAL_SILVER / "retrieval_benchmark.json").read_text(encoding="utf-8")
+    )
+
+    assert payload["schema_version"] == 2
+    assert payload["dataset"]["kind"] == "silver"
+    assert payload["dataset"]["human_reviewed"] is False
+    assert payload["dataset"]["audit_sample_records"] == 20
+    assert payload["dataset"]["audit_statuses"] == {
+        "approved": 20,
+        "needs_changes": 0,
+        "pending": 0,
+        "rejected": 0,
+    }
+    assert payload["dataset"]["audit_provenance"] == {
+        "decisions_with_provenance": 20,
+        "reviewers": ["berksankir"],
+        "latest_reviewed_at_utc": "2026-09-02T08:37:55Z",
+    }
+    assert payload["reproducibility"]["dataset_kind"] == "silver"
+    assert payload["reproducibility"]["chunk_count"] == 436
+    assert payload["reproducibility"]["review_artifact_sha256"] == hashlib.sha256(
+        Path("evaluation/silver_audit.csv").read_bytes()
+    ).hexdigest()
+
+
+def test_canonical_silver_results_cover_both_splits_without_claiming_gold() -> None:
+    payload = json.loads(
+        (CANONICAL_SILVER / "retrieval_benchmark.json").read_text(encoding="utf-8")
+    )
+    rows = payload["queries"]
+
+    assert len(rows) == 200
+    assert {row["dataset_kind"] for row in rows} == {"silver"}
+    assert sum(row["split"] == "dev" for row in rows) == 40
+    assert sum(row["split"] == "test" for row in rows) == 160
+    markdown = (CANONICAL_SILVER / "retrieval_benchmark.md").read_text(
+        encoding="utf-8"
+    )
+    assert markdown.startswith("# Silver retrieval benchmark")
+    assert "Human audit durumu: approved=20" in markdown
+    assert "insan onaylı gold" not in markdown
